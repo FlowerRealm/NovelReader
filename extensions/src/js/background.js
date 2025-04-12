@@ -31,7 +31,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true, content: data });
             }
         });
-        return true; // Indicates that the response will be sent asynchronously
+        return true;
     } else if (message.action === 'saveCurrentLine') {
         const currentLine = message.data.currentLine;
         chrome.storage.local.set({ novelLine: currentLine }, () => {
@@ -41,6 +41,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true });
             }
         });
-        return true; // Ensure asynchronous response handling
+        return true;
     }
 });
