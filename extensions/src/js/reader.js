@@ -22,8 +22,6 @@ let isDragging = false;
 let offsetX, offsetY;
 let currentLine = 0;
 let lines = [];
-
-// Dragging functionality
 novelContainer.addEventListener('mousedown', (e) => {
     isDragging = true;
     offsetX = e.clientX - novelContainer.getBoundingClientRect().left;
@@ -53,8 +51,6 @@ novelContainer.addEventListener('input', () => {
     novelContainer.style.width = 'auto';
     novelContainer.style.width = `${novelContainer.scrollWidth}px`;
 });
-
-// Position saving and loading
 function saveNovelContainerPosition() {
     const position = {
         top: novelContainer.style.top,
@@ -70,8 +66,6 @@ function loadNovelContainerPosition() {
         novelContainer.style.left = position.left;
     }
 }
-
-// Storage utility functions
 function getStorage(key, callback) {
     chrome.storage.local.get(key, (result) => {
         if (chrome.runtime.lastError) {
@@ -94,8 +88,6 @@ function saveVisibilityState(isVisible) {
         }
     });
 }
-
-// Reader initialization
 function initializeReader() {
     chrome.storage.local.get('isVisible', (result) => {
         if (chrome.runtime.lastError) {
@@ -164,10 +156,8 @@ function toggleContainerContent() {
 
     saveVisibilityState(isCurrentlyHidden);
 }
-
-// Keyboard event handling
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'h') {
+    if (e.shiftKey && e.key === 'H') {
         chrome.storage.local.get('isVisible', (result) => {
             const isVisible = result.isVisible;
             if (isVisible) {
@@ -191,7 +181,7 @@ document.addEventListener('keydown', (e) => {
                 });
             }
         });
-    } else if (e.key === 'n') {
+    } else if (e.shiftKey && e.key === 'N') {
         if (lines.length > 0 && currentLine < lines.length - 1) {
             currentLine++;
             novelContainer.value = lines[currentLine] || 'End of file reached';
@@ -209,7 +199,7 @@ document.addEventListener('keydown', (e) => {
                 }
             });
         }
-    } else if (e.key === 'p') {
+    } else if (e.shiftKey && e.key === 'P') {
         if (lines.length > 0 && currentLine > 0) {
             currentLine--;
             novelContainer.value = lines[currentLine] || 'Start of file reached';
