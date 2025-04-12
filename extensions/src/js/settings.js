@@ -10,16 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveButton.disabled = !novelPathInput.value && !novelLineInput.value && !fontFamilyInput.value && !fontSizeInput.value;
     }
 
-    novelPathInput.addEventListener('change', () => {
-        if (novelPathInput.files.length > 0) {
-            novelPathDisplay.textContent = novelPathInput.files[0].name;
-        }
-        updateButtonState();
-    });
-    novelLineInput.addEventListener('input', updateButtonState);
-    fontFamilyInput.addEventListener('change', updateButtonState);
-    fontSizeInput.addEventListener('input', updateButtonState);
-
     function setStorage(key, value) {
         const data = {};
         data[key] = value;
@@ -56,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    saveButton.addEventListener('click', () => {
+    function saveSettings() {
         if (novelPathInput.files.length === 0) {
             alert('Please select a file before saving settings.');
             return;
@@ -87,7 +77,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         alert('Settings saved to storage!');
+    }
+
+    novelPathInput.addEventListener('change', () => {
+        if (novelPathInput.files.length > 0) {
+            novelPathDisplay.textContent = novelPathInput.files[0].name;
+        }
+        updateButtonState();
     });
+
+    novelLineInput.addEventListener('input', updateButtonState);
+    fontFamilyInput.addEventListener('change', updateButtonState);
+    fontSizeInput.addEventListener('input', updateButtonState);
+
+    saveButton.addEventListener('click', saveSettings);
 
     loadSettings();
 });
