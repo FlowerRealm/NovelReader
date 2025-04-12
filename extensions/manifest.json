@@ -2,5 +2,44 @@
     "name": "NovelReader",
     "version": "0.1",
     "manifest_version": 3,
-    "description": "Hard to detect to Read Novel"
+    "description": "Hard to detect to Read Novel",
+    "background": {
+        "service_worker": "src/js/background.js"
+    },
+    "action": {
+        "default_title": "NovelReader"
+    },
+    "permissions": [
+        "cookies",
+        "storage",
+        "activeTab"
+    ],
+    "host_permissions": [
+        "<all_urls>",
+        "chrome-extension://*/*"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "src/js/main.js",
+                "src/js/background.js",
+                "src/html/settings.html",
+                "src/js/reader.js",
+                "src/html/reader.html"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "src/js/reader.js"
+            ]
+        }
+    ]
 }
