@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         for (const [key, value] of Object.entries(settings)) {
             chrome.storage.local.set({ [key]: value }, () => {
                 if (chrome.runtime.lastError) {
-                    console.error('Failed to save setting:', key, chrome.runtime.lastError);
+                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
                 }
             });
         }
@@ -36,7 +36,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const currentLine = message.data.currentLine;
         chrome.storage.local.set({ novelLine: currentLine }, () => {
             if (chrome.runtime.lastError) {
-                console.error('Failed to save current line:', chrome.runtime.lastError);
                 sendResponse({ success: false, error: chrome.runtime.lastError.message });
             } else {
                 sendResponse({ success: true });

@@ -58,6 +58,20 @@ novelContainer.addEventListener('change', adjustContainerSize);
 
 // Initialize settings immediately on load
 function initializeReader() {
+    chrome.storage.local.get('isVisible', (result) => {
+        if (chrome.runtime.lastError) {
+            console.error('Failed to load visibility state:', chrome.runtime.lastError);
+        } else {
+            novelContainer.style.display = result.isVisible ? 'block' : 'none';
+        }
+    });
+
+    getStorage('novelContent', (novelContent) => {
+        if (!novelContent) {
+            console.warn('No novel content found in storage.');
+        }
+    });
+
     getStorage('novelContent', (novelContent) => {
         getStorage('novelLine', (novelLine) => {
             getStorage('fontFamily', (fontFamily) => {
@@ -97,6 +111,26 @@ function getStorage(key, callback) {
     });
 }
 
+// Save visibility state to storage
+function saveVisibilityState(isVisible) {
+    chrome.storage.local.set({ isVisible }, () => {
+        if (chrome.runtime.lastError) {
+            console.error('Failed to save visibility state:', chrome.runtime.lastError);
+        }
+    });
+}
+
+// Load visibility state from storage
+function loadVisibilityState() {
+    chrome.storage.local.get('isVisible', (result) => {
+        if (chrome.runtime.lastError) {
+            console.error('Failed to load visibility state:', chrome.runtime.lastError);
+        } else {
+            novelContainer.style.display = result.isVisible ? 'block' : 'none';
+        }
+    });
+}
+
 // Initialize reader on load
 initializeReader();
 
@@ -106,7 +140,9 @@ let lines = [];
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'h') { // Toggle visibility with 'h'
-        novelContainer.style.display = novelContainer.style.display === 'none' ? 'block' : 'none';
+        const isVisible = novelContainer.style.display === 'none';
+        novelContainer.style.display = isVisible ? 'block' : 'none';
+        saveVisibilityState(isVisible); // Save the updated visibility state
     } else if (e.key === 'n') { // Read next line with 'n'
         if (lines.length > 0 && currentLine < lines.length - 1) {
             currentLine++;

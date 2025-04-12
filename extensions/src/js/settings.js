@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 novelPathDisplay.textContent = file.name; // 显示文件名
             };
             reader.onerror = () => {
-                console.error('Failed to read file:', reader.error);
                 alert('Failed to read the selected file.');
             };
             reader.readAsText(file); // 读取文件内容为文本
@@ -92,8 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const fontSize = parseInt(fontSizeInput.value, 10); // Parse font size as an integer
             if (!isNaN(fontSize)) {
                 setStorage('fontSize', fontSize);
-            } else {
-                console.error('Invalid font size value:', fontSizeInput.value);
             }
         }
         alert('Settings saved to storage!');
