@@ -1,6 +1,5 @@
 console.log('Reader script loaded successfully.');
 
-// Reverting to the original implementation with a standard textarea
 const novelContainer = document.createElement('textarea');
 novelContainer.id = 'novel-container';
 novelContainer.style.position = 'fixed';
@@ -9,22 +8,27 @@ novelContainer.style.left = '10px';
 novelContainer.style.width = '300px';
 novelContainer.style.height = '200px';
 novelContainer.style.zIndex = '1000';
-novelContainer.style.overflow = 'auto';
-// Make the novel container borderless and transparent
 novelContainer.style.border = 'none';
 novelContainer.style.backgroundColor = 'transparent';
 novelContainer.style.boxShadow = 'none';
+novelContainer.style.resize = 'none';
+novelContainer.style.overflow = 'hidden';
+novelContainer.style.whiteSpace = 'nowrap';
+novelContainer.style.overflowX = 'hidden';
+novelContainer.style.textOverflow = 'ellipsis';
 document.body.appendChild(novelContainer);
 
-// Ensure the novel container is draggable but auto-resizing
 let isDragging = false;
 let offsetX, offsetY;
+let currentLine = 0;
+let lines = [];
 
+// Dragging functionality
 novelContainer.addEventListener('mousedown', (e) => {
     isDragging = true;
     offsetX = e.clientX - novelContainer.getBoundingClientRect().left;
     offsetY = e.clientY - novelContainer.getBoundingClientRect().top;
-    document.body.style.cursor = 'move'; // Change cursor to indicate dragging
+    document.body.style.cursor = 'move';
     e.preventDefault();
 });
 
@@ -37,26 +41,61 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-document.addEventListener('mouseup', () => {
+novelContainer.addEventListener('mouseup', () => {
     if (isDragging) {
         isDragging = false;
-        document.body.style.cursor = 'default'; // Reset cursor
+        document.body.style.cursor = 'default';
+        saveNovelContainerPosition();
     }
 });
 
-// Automatically adjust the size of the container to fit its content
-function adjustContainerSize() {
-    novelContainer.style.height = 'auto'; // Reset height to auto to calculate scrollHeight
-    novelContainer.style.width = 'auto'; // Reset width to auto to calculate scrollWidth
-    novelContainer.style.height = `${novelContainer.scrollHeight}px`;
+novelContainer.addEventListener('input', () => {
+    novelContainer.style.width = 'auto';
     novelContainer.style.width = `${novelContainer.scrollWidth}px`;
+});
+
+// Position saving and loading
+function saveNovelContainerPosition() {
+    const position = {
+        top: novelContainer.style.top,
+        left: novelContainer.style.left
+    };
+    localStorage.setItem('novelContainerPosition', JSON.stringify(position));
 }
 
-// Call adjustContainerSize whenever the content changes
-novelContainer.addEventListener('input', adjustContainerSize);
-novelContainer.addEventListener('change', adjustContainerSize);
+function loadNovelContainerPosition() {
+    const position = JSON.parse(localStorage.getItem('novelContainerPosition'));
+    if (position) {
+        novelContainer.style.top = position.top;
+        novelContainer.style.left = position.left;
+    }
+}
 
-// Initialize settings immediately on load
+// Storage utility functions
+function getStorage(key, callback) {
+    chrome.storage.local.get(key, (result) => {
+        if (chrome.runtime.lastError) {
+            console.error('Failed to get storage:', chrome.runtime.lastError);
+            callback(null);
+        } else {
+            callback(result[key] || null);
+        }
+    });
+}
+
+function saveVisibilityState(isVisible) {
+    if (!chrome || !chrome.storage || !chrome.storage.local) {
+        console.error('Extension context is invalid. Cannot save visibility state.');
+        return;
+    }
+    chrome.storage.local.set({ isVisible }, () => {
+        if (chrome.runtime.lastError) {
+            console.error('Failed to save visibility state:', chrome.runtime.lastError);
+        }
+    });
+}
+
+// Reader initialization
 function initializeReader() {
     chrome.storage.local.get('isVisible', (result) => {
         if (chrome.runtime.lastError) {
@@ -76,13 +115,13 @@ function initializeReader() {
         getStorage('novelLine', (novelLine) => {
             getStorage('fontFamily', (fontFamily) => {
                 getStorage('fontSize', (fontSize) => {
-                    novelLine = Math.max(0, parseInt(novelLine, 10) - 1); // 将用户输入的行号减1以适配数组索引
+                    novelLine = Math.max(1, parseInt(novelLine, 10));
                     fontFamily = fontFamily || 'Arial';
                     fontSize = parseInt(fontSize, 10) || 16;
 
                     if (novelContent) {
                         lines = novelContent.split('\n');
-                        currentLine = Math.min(novelLine, lines.length - 1);
+                        currentLine = Math.min(novelLine - 1, lines.length - 1);
                         novelContainer.value = lines[currentLine] || 'File is empty';
                     } else {
                         novelContainer.value = 'No novel content found. Please set the file content in settings.';
@@ -91,71 +130,105 @@ function initializeReader() {
                     novelContainer.style.fontFamily = fontFamily;
                     novelContainer.style.fontSize = `${fontSize}px`;
 
-                    // Adjust size on initialization
-                    adjustContainerSize();
+                    novelContainer.style.height = 'auto';
+                    novelContainer.style.width = 'auto';
+                    novelContainer.style.height = `${novelContainer.scrollHeight}px`;
+                    novelContainer.style.width = `${novelContainer.scrollWidth}px`;
                 });
             });
         });
     });
 }
 
-// Helper function to get storage value
-function getStorage(key, callback) {
-    chrome.storage.local.get(key, (result) => {
-        if (chrome.runtime.lastError) {
-            console.error('Failed to get storage:', chrome.runtime.lastError);
-            callback(null);
-        } else {
-            callback(result[key] || null);
-        }
-    });
+// Visibility toggling
+async function toggleVisibility() {
+    try {
+        const isCurrentlyHidden = novelContainer.style.display === 'none';
+        const newVisibility = isCurrentlyHidden ? 'block' : 'none';
+        novelContainer.style.display = newVisibility;
+        await saveVisibilityState(newVisibility === 'block');
+    } catch (error) {
+        console.error('Failed to toggle visibility:', error);
+    }
 }
 
-// Save visibility state to storage
-function saveVisibilityState(isVisible) {
-    chrome.storage.local.set({ isVisible }, () => {
-        if (chrome.runtime.lastError) {
-            console.error('Failed to save visibility state:', chrome.runtime.lastError);
-        }
-    });
+function toggleContainerContent() {
+    const isCurrentlyHidden = novelContainer.style.display === 'none';
+    novelContainer.style.display = isCurrentlyHidden ? 'block' : 'none';
+
+    if (isCurrentlyHidden) {
+        novelContainer.value = lines[currentLine] || 'No content available';
+    } else {
+        novelContainer.value = '';
+    }
+
+    saveVisibilityState(isCurrentlyHidden);
 }
 
-// Load visibility state from storage
-function loadVisibilityState() {
-    chrome.storage.local.get('isVisible', (result) => {
-        if (chrome.runtime.lastError) {
-            console.error('Failed to load visibility state:', chrome.runtime.lastError);
-        } else {
-            novelContainer.style.display = result.isVisible ? 'block' : 'none';
-        }
-    });
-}
-
-// Initialize reader on load
-initializeReader();
-
-// Keyboard functionality
-let currentLine = 0;
-let lines = [];
-
+// Keyboard event handling
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'h') { // Toggle visibility with 'h'
-        const isVisible = novelContainer.style.display === 'none';
-        novelContainer.style.display = isVisible ? 'block' : 'none';
-        saveVisibilityState(isVisible); // Save the updated visibility state
-    } else if (e.key === 'n') { // Read next line with 'n'
+    if (e.key === 'h') {
+        chrome.storage.local.get('isVisible', (result) => {
+            const isVisible = result.isVisible;
+            if (isVisible) {
+                novelContainer.style.display = 'none';
+                chrome.storage.local.set({ isVisible: false }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Failed to update visibility state:', chrome.runtime.lastError);
+                    }
+                });
+            } else {
+                novelContainer.style.display = 'block';
+                novelContainer.style.width = 'auto';
+                novelContainer.style.height = 'auto';
+                novelContainer.style.width = `${novelContainer.scrollWidth}px`;
+                novelContainer.style.height = `${novelContainer.scrollHeight}px`;
+
+                chrome.storage.local.set({ isVisible: true }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Failed to update visibility state:', chrome.runtime.lastError);
+                    }
+                });
+            }
+        });
+    } else if (e.key === 'n') {
         if (lines.length > 0 && currentLine < lines.length - 1) {
             currentLine++;
             novelContainer.value = lines[currentLine] || 'End of file reached';
-            // Save current line to background
+            console.log(`Saving current line: ${currentLine + 1}`);
             chrome.runtime.sendMessage({
                 action: 'saveCurrentLine',
-                data: { currentLine }
+                data: { currentLine: currentLine + 1 }
             }, (response) => {
                 if (chrome.runtime.lastError) {
-                    console.error('Failed to save current line:', chrome.runtime.lastError);
+                    console.error('Failed to send saveCurrentLine message:', chrome.runtime.lastError);
+                } else if (!response || !response.success) {
+                    console.error('Failed to save current line:', response ? response.error : 'Unknown error');
+                } else {
+                    console.log('Current line saved successfully.');
+                }
+            });
+        }
+    } else if (e.key === 'p') {
+        if (lines.length > 0 && currentLine > 0) {
+            currentLine--;
+            novelContainer.value = lines[currentLine] || 'Start of file reached';
+            console.log(`Saving current line: ${currentLine + 1}`);
+            chrome.runtime.sendMessage({
+                action: 'saveCurrentLine',
+                data: { currentLine: currentLine + 1 }
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error('Failed to send saveCurrentLine message:', chrome.runtime.lastError);
+                } else if (!response || !response.success) {
+                    console.error('Failed to save current line:', response ? response.error : 'Unknown error');
+                } else {
+                    console.log('Current line saved successfully.');
                 }
             });
         }
     }
 });
+
+loadNovelContainerPosition();
+initializeReader();

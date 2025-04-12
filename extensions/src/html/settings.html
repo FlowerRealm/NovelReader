@@ -1,3 +1,10 @@
+<!--
+ * @Author: FlowerCity qzrobotsnake@gmail.com
+ * @Date: 2025-04-12 10:07:03
+ * @LastEditors: FlowerCity qzrobotsnake@gmail.com
+ * @LastEditTime: 2025-04-12 10:08:44
+ * @FilePath: \NovelReader\extensions\src\html\settings.html
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,12 +19,14 @@
     <form id="settings-form">
         <div>
             <label for="novel-path">Novel Path:</label>
-            <input type="file" id="novel-path" name="novel-path" accept=".txt">
+            <input type="file" id="novel-path" name="novel-path" accept=".txt"
+                title="Select a novel file in .txt format">
             <span id="novel-path-display" style="margin-left: 10px; color: gray;">No file selected</span>
         </div>
         <br>
         <label for="novel-line">Line:</label>
-        <input type="number" id="novel-line" name="novel-line" min="1">
+        <input type="number" id="novel-line" name="novel-line" min="1"
+            title="Enter the line number to start reading from">
         <br>
         <label for="font-family">字体:</label>
         <select id="font-family" name="font-family">
@@ -28,7 +37,7 @@
         </select>
         <br>
         <label for="font-size">字体大小:</label>
-        <input type="number" id="font-size" name="font-size" min="10" max="72">
+        <input type="number" id="font-size" name="font-size" min="10" max="72" title="Set the font size (10-72)">
         <br>
         <button type="button" id="save-button" disabled>Save</button>
     </form>
