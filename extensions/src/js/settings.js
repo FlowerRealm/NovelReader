@@ -1,3 +1,8 @@
+// Consolidate repetitive message sending into a helper function
+function sendMessage(action, key, value, callback) {
+    chrome.runtime.sendMessage({ action, key, value }, callback);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const novelPathInput = document.getElementById('novel-path');
     const novelPathDisplay = document.getElementById('novel-path-display');
@@ -10,38 +15,17 @@ document.addEventListener('DOMContentLoaded', () => {
         saveButton.disabled = !novelPathInput.value && !novelLineInput.value && !fontFamilyInput.value && !fontSizeInput.value;
     }
 
-    function setStorage(key, value) {
-        const data = {};
-        data[key] = value;
-        chrome.storage.local.set(data, () => {
-            if (chrome.runtime.lastError) {
-                console.error('Failed to set storage:', chrome.runtime.lastError);
-            }
-        });
-    }
-
-    function getStorage(key, callback) {
-        chrome.storage.local.get(key, (result) => {
-            if (chrome.runtime.lastError) {
-                console.error('Failed to get storage:', chrome.runtime.lastError);
-                callback(null);
-            } else {
-                callback(result[key] || null);
-            }
-        });
-    }
-
     function loadSettings() {
-        getStorage('novelPath', (novelPath) => {
+        sendMessage('getStorage', 'novelPath', null, (novelPath) => {
             if (novelPath) novelPathDisplay.textContent = novelPath;
         });
-        getStorage('novelLine', (novelLine) => {
+        sendMessage('getStorage', 'novelLine', null, (novelLine) => {
             if (novelLine) novelLineInput.value = novelLine;
         });
-        getStorage('fontFamily', (fontFamily) => {
+        sendMessage('getStorage', 'fontFamily', null, (fontFamily) => {
             if (fontFamily) fontFamilyInput.value = fontFamily;
         });
-        getStorage('fontSize', (fontSize) => {
+        sendMessage('getStorage', 'fontSize', null, (fontSize) => {
             if (fontSize) fontSizeInput.value = fontSize;
         });
     }
@@ -56,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onload = () => {
                 const fileContent = reader.result;
-                setStorage('novelContent', fileContent);
+                sendMessage('setStorage', 'novelContent', fileContent);
                 novelPathDisplay.textContent = file.name;
             };
             reader.onerror = () => {
@@ -64,18 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             reader.readAsText(file);
         }
-        if (novelLineInput.value) {
-            setStorage('novelLine', novelLineInput.value);
-        }
-        if (fontFamilyInput.value) {
-            setStorage('fontFamily', fontFamilyInput.value);
-        }
-        if (fontSizeInput.value) {
-            const fontSize = parseInt(fontSizeInput.value, 10);
-            if (!isNaN(fontSize)) {
-                setStorage('fontSize', fontSize);
-            }
-        }
+
+        sendMessage('setStorage', 'novelLine', novelLineInput.value);
+        sendMessage('setStorage', 'fontFamily', fontFamilyInput.value);
+        sendMessage('setStorage', 'fontSize', fontSizeInput.value);
+
         alert('Settings saved to storage!');
     }
 
