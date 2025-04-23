@@ -1,0 +1,182 @@
+{
+    "appName": {
+        "message": "Novel Reader",
+        "description": "Extension name"
+    },
+    "appDesc": {
+        "message": "A discreet tool for reading novels",
+        "description": "Extension description"
+    },
+    "settings": {
+        "message": "Settings",
+        "description": "Settings page title"
+    },
+    "basicSettings": {
+        "message": "Basic Settings",
+        "description": "Basic settings group title"
+    },
+    "displaySettings": {
+        "message": "Display Settings",
+        "description": "Display settings group title"
+    },
+    "transparencySettings": {
+        "message": "Transparency Settings",
+        "description": "Transparency settings group title"
+    },
+    "advancedSettings": {
+        "message": "Advanced Settings",
+        "description": "Advanced settings group title"
+    },
+    "language": {
+        "message": "Language:",
+        "description": "Language selection label"
+    },
+    "novelFile": {
+        "message": "Novel File:",
+        "description": "Novel file selection label"
+    },
+    "novelFileDesc": {
+        "message": "Supported formats: TXT, Markdown files (.md/.markdown)",
+        "description": "File format description"
+    },
+    "startLine": {
+        "message": "Start Line:",
+        "description": "Start line number setting label"
+    },
+    "startLineDesc": {
+        "message": "Which line to start reading from (1 means start from beginning)",
+        "description": "Start line description"
+    },
+    "fontFamily": {
+        "message": "Font Family:",
+        "description": "Font selection label"
+    },
+    "fontMsYaHei": {
+        "message": "Microsoft YaHei",
+        "description": "Microsoft YaHei font"
+    },
+    "fontSimSun": {
+        "message": "SimSun",
+        "description": "SimSun font"
+    },
+    "fontKaiTi": {
+        "message": "KaiTi",
+        "description": "KaiTi font"
+    },
+    "fontArial": {
+        "message": "Arial",
+        "description": "Arial font"
+    },
+    "fontTimesNewRoman": {
+        "message": "Times New Roman",
+        "description": "Times New Roman font"
+    },
+    "fontSize": {
+        "message": "Font Size:",
+        "description": "Font size setting label"
+    },
+    "fontSizeDesc": {
+        "message": "Larger number means bigger text (Recommended: 12-18)",
+        "description": "Font size description"
+    },
+    "lineHeight": {
+        "message": "Line Height:",
+        "description": "Line height setting label"
+    },
+    "lineHeightDesc": {
+        "message": "Space between lines (Recommended: 1.2-1.8)",
+        "description": "Line height description"
+    },
+    "textColor": {
+        "message": "Text Color:",
+        "description": "Text color setting label"
+    },
+    "textColorDesc": {
+        "message": "Click the color block to choose your preferred text color",
+        "description": "Text color description"
+    },
+    "textOpacity": {
+        "message": "Text Opacity:",
+        "description": "Text opacity label"
+    },
+    "textOpacityDesc": {
+        "message": "Slide to adjust text transparency (lower means more transparent)",
+        "description": "Text opacity description"
+    },
+    "textHoverOpacity": {
+        "message": "On Mouse Over:",
+        "description": "Text hover opacity label"
+    },
+    "textHoverOpacityDesc": {
+        "message": "Text opacity when mouse is over",
+        "description": "Text hover opacity description"
+    },
+    "bgOpacity": {
+        "message": "Background Opacity:",
+        "description": "Background opacity label"
+    },
+    "bgOpacityDesc": {
+        "message": "Overall background transparency (lower means more transparent)",
+        "description": "Background opacity description"
+    },
+    "bgHoverOpacity": {
+        "message": "On Mouse Over:",
+        "description": "Background hover opacity label"
+    },
+    "bgHoverOpacityDesc": {
+        "message": "Background opacity when mouse is over",
+        "description": "Background hover opacity description"
+    },
+    "textShadow": {
+        "message": "Text Effect:",
+        "description": "Text shadow effect label"
+    },
+    "textShadowDesc": {
+        "message": "Add white outline to make text visible on any background",
+        "description": "Text shadow effect description"
+    },
+    "maxWidth": {
+        "message": "Display Width:",
+        "description": "Maximum width setting label"
+    },
+    "maxWidthDesc": {
+        "message": "Maximum width of text display area (percentage of screen width)",
+        "description": "Maximum width description"
+    },
+    "preview": {
+        "message": "Preview",
+        "description": "Preview area title"
+    },
+    "previewText": {
+        "message": "Here you can preview the text display effect. Adjust the options above, and this will update in real-time.",
+        "description": "Preview text"
+    },
+    "save": {
+        "message": "Save Settings",
+        "description": "Save button text"
+    },
+    "settingsSaved": {
+        "message": "Settings saved successfully!",
+        "description": "Settings saved success message"
+    },
+    "settingsSaveError": {
+        "message": "Failed to save settings, please try again.",
+        "description": "Settings save error message"
+    },
+    "noFileSelected": {
+        "message": "No file selected",
+        "description": "Text shown when no file is selected"
+    },
+    "noContent": {
+        "message": "Please set novel content in settings",
+        "description": "Default text when no content is loaded"
+    },
+    "parseError": {
+        "message": "Failed to parse file, please ensure correct file format",
+        "description": "Error message when file parsing fails"
+    },
+    "unsupportedFormat": {
+        "message": "Format not supported yet",
+        "description": "Error message for unsupported file formats"
+    }
+}

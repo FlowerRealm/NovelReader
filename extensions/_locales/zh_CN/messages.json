@@ -1,0 +1,182 @@
+{
+    "appName": {
+        "message": "小说阅读器",
+        "description": "扩展名称"
+    },
+    "appDesc": {
+        "message": "一个隐蔽的小说阅读工具",
+        "description": "扩展描述"
+    },
+    "settings": {
+        "message": "设置",
+        "description": "设置页面标题"
+    },
+    "basicSettings": {
+        "message": "基本设置",
+        "description": "基本设置组标题"
+    },
+    "displaySettings": {
+        "message": "显示设置",
+        "description": "显示设置组标题"
+    },
+    "transparencySettings": {
+        "message": "透明度设置",
+        "description": "透明度设置组标题"
+    },
+    "advancedSettings": {
+        "message": "高级设置",
+        "description": "高级设置组标题"
+    },
+    "language": {
+        "message": "语言",
+        "description": "语言选择标签"
+    },
+    "novelFile": {
+        "message": "小说文件",
+        "description": "小说文件选择标签"
+    },
+    "novelFileDesc": {
+        "message": "支持的格式：TXT、Markdown文件（.md/.markdown）",
+        "description": "文件格式说明"
+    },
+    "startLine": {
+        "message": "起始行号",
+        "description": "起始行号设置标签"
+    },
+    "startLineDesc": {
+        "message": "从第几行开始阅读（1 表示从头开始）",
+        "description": "起始行号说明"
+    },
+    "fontFamily": {
+        "message": "字体样式",
+        "description": "字体选择标签"
+    },
+    "fontMsYaHei": {
+        "message": "微软雅黑",
+        "description": "微软雅黑字体"
+    },
+    "fontSimSun": {
+        "message": "宋体",
+        "description": "宋体字体"
+    },
+    "fontKaiTi": {
+        "message": "楷体",
+        "description": "楷体字体"
+    },
+    "fontArial": {
+        "message": "Arial",
+        "description": "Arial 字体"
+    },
+    "fontTimesNewRoman": {
+        "message": "Times New Roman",
+        "description": "Times New Roman 字体"
+    },
+    "fontSize": {
+        "message": "文字大小",
+        "description": "字号设置标签"
+    },
+    "fontSizeDesc": {
+        "message": "数字越大文字越大（建议：12-18）",
+        "description": "字号说明"
+    },
+    "lineHeight": {
+        "message": "行间距",
+        "description": "行高设置标签"
+    },
+    "lineHeightDesc": {
+        "message": "行与行之间的间距（建议：1.2-1.8）",
+        "description": "行高说明"
+    },
+    "textColor": {
+        "message": "文字颜色",
+        "description": "文字颜色设置标签"
+    },
+    "textColorDesc": {
+        "message": "点击颜色块可以选择喜欢的文字颜色",
+        "description": "文字颜色说明"
+    },
+    "textOpacity": {
+        "message": "文字透明度",
+        "description": "文字透明度标签"
+    },
+    "textOpacityDesc": {
+        "message": "滑动调节文字的透明度（越小越透明）",
+        "description": "文字透明度说明"
+    },
+    "textHoverOpacity": {
+        "message": "鼠标悬停时",
+        "description": "文字悬停透明度标签"
+    },
+    "textHoverOpacityDesc": {
+        "message": "鼠标放到文字上时的透明度",
+        "description": "文字悬停透明度说明"
+    },
+    "bgOpacity": {
+        "message": "背景透明度",
+        "description": "背景透明度标签"
+    },
+    "bgOpacityDesc": {
+        "message": "整体背景的透明度（越小越透明）",
+        "description": "背景透明度说明"
+    },
+    "bgHoverOpacity": {
+        "message": "背景悬停时",
+        "description": "背景悬停透明度标签"
+    },
+    "bgHoverOpacityDesc": {
+        "message": "鼠标放上去时背景的透明度",
+        "description": "背景悬停透明度说明"
+    },
+    "textShadow": {
+        "message": "文字效果",
+        "description": "文字阴影效果标签"
+    },
+    "textShadowDesc": {
+        "message": "添加白色边框，让文字在任何背景下都清晰可见",
+        "description": "文字阴影效果说明"
+    },
+    "maxWidth": {
+        "message": "显示宽度",
+        "description": "最大宽度设置标签"
+    },
+    "maxWidthDesc": {
+        "message": "文字显示区域的最大宽度（占屏幕宽度的百分比）",
+        "description": "最大宽度说明"
+    },
+    "preview": {
+        "message": "预览效果",
+        "description": "预览区域标题"
+    },
+    "previewText": {
+        "message": "在这里可以预览文字的显示效果。调整上面的选项，这里会实时更新。",
+        "description": "预览文本"
+    },
+    "save": {
+        "message": "保存设置",
+        "description": "保存按钮文字"
+    },
+    "settingsSaved": {
+        "message": "设置保存成功！",
+        "description": "设置保存成功提示"
+    },
+    "settingsSaveError": {
+        "message": "保存设置失败，请重试。",
+        "description": "设置保存失败提示"
+    },
+    "noFileSelected": {
+        "message": "未选择文件",
+        "description": "未选择文件时显示的文本"
+    },
+    "noContent": {
+        "message": "请在设置中设置小说内容",
+        "description": "未加载内容时的默认提示文本"
+    },
+    "parseError": {
+        "message": "解析文件失败，请确保文件格式正确",
+        "description": "文件解析失败时的错误提示"
+    },
+    "unsupportedFormat": {
+        "message": "暂不支持该格式",
+        "description": "不支持的文件格式错误提示"
+    }
+}
