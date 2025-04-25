@@ -123,6 +123,24 @@ class NovelReader {
         this.currentLine = 0;
         this.lines = [];
         this.autoHideTimer = null;
+        // 使用 i18n API 获取本地化消息
+        this.defaultMessages = {
+            noContent: chrome.i18n.getMessage('noContent'),
+            parseError: chrome.i18n.getMessage('parseError'),
+            unsupportedFormat: chrome.i18n.getMessage('unsupportedFormat')
+        };
+
+        // 监听语言变更事件
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            if (message.action === 'localeChanged') {
+                this.updateMessages();
+                this.updateContent();
+            }
+        });
+    }
+
+    // 新增：更新本地化消息
+    updateMessages() {
         this.defaultMessages = {
             noContent: chrome.i18n.getMessage('noContent') || '请在设置中设置小说内容',
             parseError: chrome.i18n.getMessage('parseError') || '解析文件失败，请确保文件格式正确',
@@ -405,6 +423,7 @@ class NovelReader {
         await this.loadPosition();
         this.updateStyle();
         this.initializeEventListeners();
+        this.updateMessages(); // 确保消息在初始化时已加载
 
         const [isVisible, content, line] = await Promise.all([
             StorageManager.get('isVisible'),
@@ -435,9 +454,14 @@ class NovelReader {
                 this.startAutoHideTimer();
             } catch (error) {
                 console.error('Failed to parse novel content:', error);
+                // 使用最新的本地化消息
                 this.lines = [this.defaultMessages.parseError];
                 this.updateContent();
             }
+        } else {
+            // 使用最新的本地化消息
+            this.lines = [this.defaultMessages.noContent];
+            this.updateContent();
         }
     }
 }

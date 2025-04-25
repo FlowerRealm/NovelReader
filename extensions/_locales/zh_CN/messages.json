@@ -178,5 +178,17 @@
     "unsupportedFormat": {
         "message": "暂不支持该格式",
         "description": "不支持的文件格式错误提示"
+    },
+    "toggleReader": {
+        "message": "显示/隐藏阅读器",
+        "description": "切换阅读器显示状态的快捷键描述"
+    },
+    "nextLine": {
+        "message": "下一行",
+        "description": "阅读下一行的快捷键描述"
+    },
+    "prevLine": {
+        "message": "上一行",
+        "description": "阅读上一行的快捷键描述"
     }
 }

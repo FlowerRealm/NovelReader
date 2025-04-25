@@ -178,5 +178,17 @@
     "unsupportedFormat": {
         "message": "Format not supported yet",
         "description": "Error message for unsupported file formats"
+    },
+    "toggleReader": {
+        "message": "Show/Hide Reader",
+        "description": "Description for the shortcut to toggle reader visibility"
+    },
+    "nextLine": {
+        "message": "Next Line",
+        "description": "Description for the shortcut to read next line"
+    },
+    "prevLine": {
+        "message": "Previous Line",
+        "description": "Description for the shortcut to read previous line"
     }
 }

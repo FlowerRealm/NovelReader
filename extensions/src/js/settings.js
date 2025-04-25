@@ -1,13 +1,47 @@
 // 消息处理封装
 function sendMessageAsync(action, key, value) {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action, key, value }, response => {
-            if (response && response.success) {
-                resolve(response.data);
-            } else {
-                resolve(null);
+    const maxRetries = 3;
+    const retryDelay = 500; // 毫秒
+
+    return new Promise(async (resolve, reject) => {
+        let attempts = 0;
+
+        const attemptSend = async () => {
+            try {
+                if (!chrome.runtime) {
+                    throw new Error('扩展运行时不可用');
+                }
+
+                chrome.runtime.sendMessage({ action, key, value }, response => {
+                    const error = chrome.runtime.lastError;
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+
+                    if (response && response.success) {
+                        resolve(response.data);
+                    } else if (response && response.error) {
+                        throw new Error(response.error);
+                    } else {
+                        throw new Error('无效的响应');
+                    }
+                });
+            } catch (error) {
+                attempts++;
+                console.warn(`消息发送失败 (${attempts}/${maxRetries}):`, error);
+
+                if (attempts >= maxRetries) {
+                    reject(new Error(`发送消息失败: ${error.message}`));
+                    return;
+                }
+
+                // 延迟后重试
+                await new Promise(r => setTimeout(r, retryDelay));
+                attemptSend();
             }
-        });
+        };
+
+        attemptSend();
     });
 }
 
@@ -24,16 +58,39 @@ function readFileAsync(file) {
 // i18n 支持类
 class I18nManager {
     static async getCurrentLocale() {
-        return await sendMessageAsync('getCurrentLocale');
+        const locale = await sendMessageAsync('getCurrentLocale');
+        return locale || 'en';
     }
 
     static async setLocale(locale) {
-        await sendMessageAsync('setLocale', 'preferredLocale', locale);
-        // 更新 HTML 语言标记
-        document.documentElement.lang = locale === 'zh_CN' ? 'zh' : 'en';
-        // 立即更新页面文本
-        this.updatePageText();
-        return true;
+        try {
+            const result = await sendMessageAsync('setLocale', 'preferredLocale', locale);
+            if (!result) {
+                throw new Error('设置语言失败');
+            }
+
+            // 更新 HTML 语言标记
+            document.documentElement.lang = locale === 'zh_CN' ? 'zh' : 'en';
+
+            // 立即更新页面文本
+            await this.updatePageText();
+
+            // 触发自定义事件通知其他组件
+            window.dispatchEvent(new CustomEvent('localeChanged', {
+                detail: { locale },
+                bubbles: true,
+                cancelable: false
+            }));
+
+            return true;
+        } catch (error) {
+            console.error('语言切换失败:', error);
+            // 显示错误提示给用户
+            if (typeof showNotification === 'function') {
+                showNotification('error', `语言切换失败: ${error.message}`);
+            }
+            return false;
+        }
     }
 
     static getMessage(key, substitutions = undefined) {
@@ -114,16 +171,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 设置当前语言
         const currentLocale = await I18nManager.getCurrentLocale();
-        form.languageSelect.value = currentLocale || (navigator.language.startsWith('zh') ? 'zh_CN' : 'en');
+        form.languageSelect.value = currentLocale;
 
         // 监听语言切换
         form.languageSelect.addEventListener('change', async () => {
             const newLocale = form.languageSelect.value;
-            await I18nManager.setLocale(newLocale);
-            // 使用 i18n 消息提示语言已更改
-            alert(I18nManager.getMessage('settingsSaved'));
-            // 重新加载扩展
-            chrome.runtime.reload();
+            const success = await I18nManager.setLocale(newLocale);
+
+            if (success) {
+                // 使用新的语言显示成功消息
+                alert(I18nManager.getMessage('settingsSaved'));
+
+                // 保存语言设置到存储
+                await sendMessageAsync('setStorage', 'preferredLocale', newLocale);
+
+                // 重新加载所有多语言文本
+                await loadSettings();
+            } else {
+                alert(I18nManager.getMessage('settingsSaveError'));
+            }
+        });
+
+        // 监听全局语言变更事件
+        window.addEventListener('localeChanged', async (event) => {
+            const { locale } = event.detail;
+            if (locale !== form.languageSelect.value) {
+                form.languageSelect.value = locale;
+                await loadSettings();
+            }
         });
     }
 
@@ -166,8 +241,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 I18nManager.getCurrentLocale()
             ]);
 
+            // 首先更新语言设置和页面文本
             if (preferredLocale && form.languageSelect) {
                 form.languageSelect.value = preferredLocale;
+                // 立即更新页面所有文本
+                await I18nManager.updatePageText();
             }
 
             if (settings) {
@@ -199,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     form.maxWidth.value = settings.maxWidth;
                 }
                 if (typeof settings.backgroundColor === 'string') {
-                    // 从 rgba 字符串中提取透明度值
                     const match = settings.backgroundColor.match(/rgba\(.*,\s*([\d.]+)\)/);
                     if (match) {
                         form.bgOpacity.value = Math.round(parseFloat(match[1]) * 100);
@@ -219,11 +296,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 form.novelLine.value = novelLine;
             }
 
-            // 更新页面文本
-            I18nManager.updatePageText();
+            // 在所有设置加载完成后更新预览
             updatePreview();
         } catch (error) {
-            console.error('Failed to load settings:', error);
+            console.error('加载设置失败:', error);
+            alert(I18nManager.getMessage('settingsSaveError'));
         }
     }
 
