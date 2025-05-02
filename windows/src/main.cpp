@@ -2,7 +2,7 @@
  * @Author: FlowerRealm flower_realm@outlook.com
  * @Date: 2025-04-04 11:47:51
  * @LastEditors: FlowerRealm flower_realm@outlook.com
- * @LastEditTime: 2025-04-22 19:41:13
+ * @LastEditTime: 2025-04-26 17:24:58
  * @FilePath: \NovelReader\windows\src\main.cpp
  */
 #include <fstream>
@@ -28,6 +28,9 @@ bool configExists(const std::string &configname)
 }
 void init()
 {
+    // 设置控制台输出编码为GB2312
+    // SetConsoleOutputCP(936); // 936是GB2312的代码页
+
     std::string AppDataPath = std::getenv("LOCALAPPDATA");
     std::string NovelreaderPath = AppDataPath + "\\Novelreader";
     std::string NovelreaderConfigPath = AppDataPath + "\\Novelreader\\config";
@@ -146,12 +149,3 @@ int main()
     novel.close();
     return 0;
 }
-/**
- n   m
- ∑   ∑   i*j/gcd(i,j)
-i=1 j=1
-
-min(n,m)     n   m
-   ∑    d *  ∑   ∑   i*j/d*[gcd(i,j)==d]
-  d=1       i=1 j=1
-*/
