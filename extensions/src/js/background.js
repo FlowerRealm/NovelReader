@@ -1,6 +1,58 @@
 // 确保在扩展启动时初始化
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
     console.log('扩展已安装/更新');
+
+    try {
+        // 初始化必要的存储变量
+        const locale = await StorageManager.get('preferredLocale');
+        if (!locale) {
+            await StorageManager.set('preferredLocale', 'en');
+            console.log('已初始化默认语言设置');
+        }
+
+        // 初始化阅读器显示状态
+        const isVisible = await StorageManager.get('isVisible');
+        if (isVisible === null) {
+            await StorageManager.set('isVisible', true);
+            console.log('已初始化阅读器显示状态');
+        }
+
+        // 初始化阅读器设置
+        const readerSettings = await StorageManager.get('readerSettings');
+        if (!readerSettings) {
+            const defaultSettings = {
+                fontFamily: 'Arial',
+                fontSize: 14,
+                lineHeight: 1.5,
+                textColor: '#000000',
+                opacity: 0.85,
+                hoverOpacity: 0.95,
+                textShadow: true,
+                maxWidth: 50,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                hoverBackgroundColor: 'rgba(255, 255, 255, 0.95)'
+            };
+            await StorageManager.set('readerSettings', defaultSettings);
+            console.log('已初始化阅读器默认设置');
+        }
+
+        // 初始化阅读位置
+        const currentLine = await StorageManager.get('currentLine');
+        if (currentLine === null) {
+            await StorageManager.set('currentLine', 1);
+            console.log('已初始化阅读行号');
+        }
+
+        // 初始化阅读器位置
+        const readerPosition = await StorageManager.get('readerPosition');
+        if (!readerPosition) {
+            await StorageManager.set('readerPosition', { left: '10px', top: '10px' });
+            console.log('已初始化阅读器位置');
+        }
+
+    } catch (error) {
+        console.error('初始化存储变量失败:', error);
+    }
 });
 
 // 在扩展启动时主动建立连接
