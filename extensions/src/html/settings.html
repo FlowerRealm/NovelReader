@@ -1,45 +1,194 @@
 <!--
  * @Author: FlowerCity qzrobotsnake@gmail.com
  * @Date: 2025-04-12 10:07:03
- * @LastEditors: FlowerCity qzrobotsnake@gmail.com
- * @LastEditTime: 2025-04-12 10:08:44
+ * @LastEditors: FlowerRealm flower_realm@outlook.com
+ * @LastEditTime: 2025-04-22 20:13:21
  * @FilePath: \NovelReader\extensions\src\html\settings.html
 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title data-i18n="settings">设置</title>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .setting-group h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .setting-item {
+            margin: 10px 0;
+        }
+
+        .setting-item .description {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 130px;
+            margin-top: 2px;
+        }
+
+        label {
+            display: inline-block;
+            width: 120px;
+            margin-right: 10px;
+        }
+
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100px;
+        }
+
+        input[type="color"] {
+            padding: 0;
+            width: 50px;
+            height: 25px;
+        }
+
+        #save-button {
+            margin-top: 20px;
+            padding: 8px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #save-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .preview-box {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px dashed #999;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Settings</h1>
+    <h1 data-i18n="settings">设置</h1>
     <form id="settings-form">
-        <div>
-            <label for="novel-path">Novel Path:</label>
-            <input type="file" id="novel-path" name="novel-path" accept=".txt"
-                title="Select a novel file in .txt format">
-            <span id="novel-path-display" style="margin-left: 10px; color: gray;">No file selected</span>
+        <div class="setting-group">
+            <h2 data-i18n="basicSettings">基本设置</h2>
+            <div class="setting-item">
+                <label for="language-select" data-i18n="language">语言：</label>
+                <select id="language-select" name="language">
+                    <option value="zh_CN">简体中文</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="novel-path" data-i18n="novelFile">小说文件：</label>
+                <input type="file" id="novel-path" name="novel-path" accept=".txt,.md,.markdown">
+                <span id="novel-path-display" style="margin-left: 10px; color: gray;"
+                    data-i18n="noFileSelected">未选择文件</span>
+                <div class="description" data-i18n="novelFileDesc">支持的格式：TXT、Markdown文件（.md/.markdown）</div>
+            </div>
+            <div class="setting-item">
+                <label for="novel-line" data-i18n="startLine">起始行号：</label>
+                <input type="number" id="novel-line" name="novel-line" min="1" value="1">
+                <div class="description" data-i18n="startLineDesc">从第几行开始阅读（1 表示从头开始）</div>
+            </div>
         </div>
-        <br>
-        <label for="novel-line">Line:</label>
-        <input type="number" id="novel-line" name="novel-line" min="1"
-            title="Enter the line number to start reading from">
-        <br>
-        <label for="font-family">字体:</label>
-        <select id="font-family" name="font-family">
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Verdana">Verdana</option>
-        </select>
-        <br>
-        <label for="font-size">字体大小:</label>
-        <input type="number" id="font-size" name="font-size" min="10" max="72" title="Set the font size (10-72)">
-        <br>
-        <button type="button" id="save-button" disabled>Save</button>
+
+        <div class="setting-group">
+            <h2 data-i18n="displaySettings">显示设置</h2>
+            <div class="setting-item">
+                <label for="font-family" data-i18n="fontFamily">字体样式：</label>
+                <select id="font-family" name="font-family">
+                    <option value="Microsoft YaHei" data-i18n="fontMsYaHei">微软雅黑</option>
+                    <option value="SimSun" data-i18n="fontSimSun">宋体</option>
+                    <option value="KaiTi" data-i18n="fontKaiTi">楷体</option>
+                    <option value="Arial" data-i18n="fontArial">Arial</option>
+                    <option value="Times New Roman" data-i18n="fontTimesNewRoman">Times New Roman</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="font-size" data-i18n="fontSize">文字大小：</label>
+                <input type="number" id="font-size" name="font-size" min="10" max="72" value="14">
+                <div class="description" data-i18n="fontSizeDesc">数字越大文字越大（建议：12-18）</div>
+            </div>
+            <div class="setting-item">
+                <label for="line-height" data-i18n="lineHeight">行间距：</label>
+                <input type="number" id="line-height" name="line-height" min="1" max="3" step="0.1" value="1.5">
+                <div class="description" data-i18n="lineHeightDesc">行与行之间的间距（建议：1.2-1.8）</div>
+            </div>
+            <div class="setting-item">
+                <label for="text-color" data-i18n="textColor">文字颜色：</label>
+                <input type="color" id="text-color" name="text-color" value="#000000">
+                <div class="description" data-i18n="textColorDesc">点击颜色块可以选择喜欢的文字颜色</div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h2 data-i18n="transparencySettings">透明度设置</h2>
+            <div class="setting-item">
+                <label for="opacity" data-i18n="textOpacity">文字透明度：</label>
+                <input type="range" id="opacity" name="opacity" min="0" max="100" value="85">
+                <span id="opacity-value">85%</span>
+                <div class="description" data-i18n="textOpacityDesc">滑动调节文字的透明度（越小越透明）</div>
+            </div>
+            <div class="setting-item">
+                <label for="hover-opacity" data-i18n="textHoverOpacity">鼠标悬停时：</label>
+                <input type="range" id="hover-opacity" name="hover-opacity" min="0" max="100" value="95">
+                <span id="hover-opacity-value">95%</span>
+                <div class="description" data-i18n="textHoverOpacityDesc">鼠标放到文字上时的透明度</div>
+            </div>
+            <div class="setting-item">
+                <label for="bg-opacity" data-i18n="bgOpacity">背景透明度：</label>
+                <input type="range" id="bg-opacity" name="bg-opacity" min="0" max="100" value="85">
+                <span id="bg-opacity-value">85%</span>
+                <div class="description" data-i18n="bgOpacityDesc">整体背景的透明度（越小越透明）</div>
+            </div>
+            <div class="setting-item">
+                <label for="hover-bg-opacity" data-i18n="bgHoverOpacity">背景悬停时：</label>
+                <input type="range" id="hover-bg-opacity" name="hover-bg-opacity" min="0" max="100" value="95">
+                <span id="hover-bg-opacity-value">95%</span>
+                <div class="description" data-i18n="bgHoverOpacityDesc">鼠标放上去时背景的透明度</div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h2 data-i18n="advancedSettings">高级设置</h2>
+            <div class="setting-item">
+                <label for="text-shadow" data-i18n="textShadow">文字效果：</label>
+                <input type="checkbox" id="text-shadow" name="text-shadow" checked>
+                <div class="description" data-i18n="textShadowDesc">添加白色边框，让文字在任何背景下都清晰可见</div>
+            </div>
+            <div class="setting-item">
+                <label for="max-width" data-i18n="maxWidth">显示宽度：</label>
+                <input type="number" id="max-width" name="max-width" min="20" max="100" value="50">
+                <div class="description" data-i18n="maxWidthDesc">文字显示区域的最大宽度（占屏幕宽度的百分比）</div>
+            </div>
+        </div>
+
+        <div class="preview-box">
+            <h3 data-i18n="preview">预览效果</h3>
+            <div id="preview-text" data-i18n="previewText">在这里可以预览文字的显示效果。调整上面的选项，这里会实时更新。</div>
+        </div>
+
+        <button type="button" id="save-button" data-i18n="save">保存设置</button>
     </form>
     <script src="../js/settings.js"></script>
 </body>

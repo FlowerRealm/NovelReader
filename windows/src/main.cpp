@@ -1,9 +1,9 @@
 /*
- * @Author: FlowerCity qzrobotsnake@gmail.com
+ * @Author: FlowerRealm flower_realm@outlook.com
  * @Date: 2025-04-04 11:47:51
- * @LastEditors: FlowerCity qzrobotsnake@gmail.com
- * @LastEditTime: 2025-04-08 22:34:33
- * @configPath: \Novelreader\windows\src\main.cpp
+ * @LastEditors: FlowerRealm flower_realm@outlook.com
+ * @LastEditTime: 2025-04-26 17:24:58
+ * @FilePath: \NovelReader\windows\src\main.cpp
  */
 #include <fstream>
 #include <iostream>
@@ -28,83 +28,45 @@ bool configExists(const std::string &configname)
 }
 void init()
 {
-    std::string AppDataPath = std::getenv("LOCALAPPDATA");
-    std::string NovelreaderPath = AppDataPath + "\\NovelReader";
-    std::string NovelreaderConfigPath = NovelreaderPath + "\\config";
+    // 设置控制台输出编码为GB2312
+    // SetConsoleOutputCP(936); // 936是GB2312的代码页
 
+    std::string AppDataPath = std::getenv("LOCALAPPDATA");
+    std::string NovelreaderPath = AppDataPath + "\\Novelreader";
+    std::string NovelreaderConfigPath = AppDataPath + "\\Novelreader\\config";
     if (!(CreateDirectory(NovelreaderPath.c_str(), NULL) || GetLastError() == ERROR_ALREADY_EXISTS))
     {
-        std::cerr << "Failed to create directory: " << NovelreaderPath << std::endl;
-        exit(EXIT_FAILURE);
+        std::cerr << "Directory create unsuccessfully, The imformation: " << GetLastError() << std::endl;
+        return;
     }
-
-    std::ifstream configFile(NovelreaderConfigPath);
-    if (!configFile.is_open())
+    config = std::fstream(NovelreaderConfigPath, std::ios::in | std::ios::out);
+    if (!configExists(NovelreaderConfigPath))
     {
-        std::ofstream newConfig(NovelreaderConfigPath);
-        if (!newConfig.is_open())
-        {
-            std::cerr << "Failed to create config file: " << NovelreaderConfigPath << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        newConfig << "" << std::endl; // Default empty content
-        newConfig.close();
-        std::cerr << "Config file created. Please set the novel path and line number in settings." << std::endl;
-        exit(EXIT_FAILURE);
+        std::cout << "config does not exist." << std::endl;
+        return;
     }
-
-    if (!std::getline(configFile, NovelPath) || NovelPath.empty())
-    {
-        std::cerr << "Novel path is missing in config. Please set it in settings." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    if (!(configFile >> line) || line <= 0)
-    {
-        std::cerr << "Invalid line number in config. Please set it in settings." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    novel.open(NovelPath, std::ios::in);
-    if (!novel.is_open())
-    {
-        std::cerr << "Failed to open novel file: " << NovelPath << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    std::getline(config, NovelPath);
+    config >> line;
+    novel = std::fstream(NovelPath, std::ios::in);
 }
 void read()
 {
     std::string content;
-    int currentLine = 0;
-
-    while (currentLine < line - 1 && std::getline(novel, content))
+    for (int i = 2; i < line; i++)
     {
-        currentLine++;
+        std::getline(novel, content);
     }
-
-    if (currentLine < line - 1)
-    {
-        std::cerr << "Line number exceeds total lines in the novel." << std::endl;
-        return;
-    }
-
     do
     {
         system("cls");
-        if (!std::getline(novel, content))
-        {
-            std::cout << "End of novel reached." << std::endl;
-            break;
-        }
+        std::getline(novel, content);
         std::cout << content << std::endl;
         char ch = getchar();
         if (ch == 'q')
         {
             break;
         }
-        line++;
-    } while (true);
-
+    } while (line++);
     write();
     system("cls");
 }
@@ -146,7 +108,7 @@ void write()
     if (lines.size() >= 2)
     {
         lines[0] = NovelPath;
-        lines[1] = std::to_string(line);
+        lines[1] = std::to_string(line - 1);
     }
     config.clear();
     config.seekp(0, std::ios::beg);

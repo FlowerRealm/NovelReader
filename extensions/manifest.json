@@ -1,10 +1,12 @@
 {
-    "name": "NovelReader",
-    "version": "1.0",
+    "name": "__MSG_appName__",
+    "version": "1.1",
     "manifest_version": 3,
-    "description": "Hard to detect to Read Novel",
+    "description": "__MSG_appDesc__",
+    "default_locale": "en",
     "background": {
-        "service_worker": "src/js/background.js"
+        "service_worker": "src/js/background.js",
+        "type": "module"
     },
     "action": {
         "default_title": "NovelReader"
@@ -12,20 +14,17 @@
     "permissions": [
         "cookies",
         "storage",
-        "activeTab"
+        "activeTab",
+        "tabs"
     ],
     "host_permissions": [
-        "<all_urls>",
-        "chrome-extension://*/*"
+        "<all_urls>"
     ],
     "web_accessible_resources": [
         {
             "resources": [
-                "src/js/main.js",
-                "src/js/background.js",
-                "src/html/settings.html",
-                "src/js/reader.js",
-                "src/html/reader.html"
+                "src/js/*",
+                "src/html/*"
             ],
             "matches": [
                 "<all_urls>"
@@ -39,7 +38,8 @@
             ],
             "js": [
                 "src/js/reader.js"
-            ]
+            ],
+            "run_at": "document_end"
         }
     ]
 }

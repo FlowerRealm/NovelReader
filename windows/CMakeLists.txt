@@ -1,8 +1,8 @@
 #设置最低的编译版本
 cmake_minimum_required(VERSION 3.10)
 #设置目标平台与标准库文件
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --target=x86_64-w64-mingw32 -stdlib=libstdc++ -O2 -Wall -DCLOCK")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=x86_64-w64-mingw32 -stdlib=libstdc++ -O2 -Wall -DCLOCK")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -DCLOCK")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -DCLOCK")
 #项目名称
 project(cppStudy)
 #设置C++版本
