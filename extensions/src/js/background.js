@@ -143,6 +143,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     responsePayload = { success: true };
                     break;
                 case 'cacheNovelForSession':
+                    // Diagnostic logging for cacheNovelForSession
+                    console.log("Received 'cacheNovelForSession'. Full message object:", JSON.stringify(message, null, 2));
+                    if (message && message.hasOwnProperty('value')) {
+                        console.log("message.value type:", typeof message.value);
+                        console.log("message.value.lines is an array?", Array.isArray(message.value.lines));
+                        if (Array.isArray(message.value.lines)) {
+                            console.log("Number of lines received in message.value.lines:", message.value.lines.length);
+                        } else {
+                            console.log("message.value.lines was NOT an array. Value:", message.value.lines);
+                        }
+                        console.log("message.value.fileName type:", typeof message.value.fileName);
+                        console.log("message.value.fileName value:", message.value.fileName);
+                    } else {
+                        console.log("message.value property is missing or message itself is not an object.");
+                    }
                     if (!message.value || !message.value.lines || message.value.fileName === undefined) {
                         throw new Error('Lines or fileName not provided in message.value for caching.');
                     }
