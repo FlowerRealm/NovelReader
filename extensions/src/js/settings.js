@@ -176,19 +176,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 监听语言切换
         form.languageSelect.addEventListener('change', async () => {
             const newLocale = form.languageSelect.value;
+            // I18nManager.setLocale handles:
+            // 1. Sending 'setLocale' action to background (which saves to storage).
+            // 2. Updating the current settings page's text via its own call to updatePageText().
+            // 3. Dispatching a 'localeChanged' custom event (for other components on the same page).
             const success = await I18nManager.setLocale(newLocale);
 
             if (success) {
-                // 使用新的语言显示成功消息
+                // Alert using the potentially newly updated language from I18nManager.setLocale's updatePageText call
                 alert(I18nManager.getMessage('settingsSaved'));
-
-                // 保存语言设置到存储
-                await sendMessageAsync('setStorage', 'preferredLocale', newLocale);
-
-                // 重新加载所有多语言文本
-                await loadSettings();
             } else {
                 alert(I18nManager.getMessage('settingsSaveError'));
+                // Optional: consider reverting form.languageSelect.value if I18nManager.getCurrentLocale()
+                // could confirm the old value, but this adds complexity. Current behavior is acceptable.
             }
         });
 
