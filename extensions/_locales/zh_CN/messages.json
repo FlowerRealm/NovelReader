@@ -190,5 +190,29 @@
     "prevLine": {
         "message": "上一行",
         "description": "阅读上一行的快捷键描述"
+    },
+    "fileEncoding": {
+        "message": "文件编码：",
+        "description": "文件编码选择下拉菜单标签"
+    },
+    "fileEncodingDesc": {
+        "message": "尝试自动检测。如果不正确，请手动选择。",
+        "description": "文件编码选择说明"
+    },
+    "encodingUtf8": {
+        "message": "UTF-8 (默认)",
+        "description": "UTF-8 编码选项"
+    },
+    "encodingGbk": {
+        "message": "GBK",
+        "description": "GBK 编码选项"
+    },
+    "encodingBig5": {
+        "message": "Big5",
+        "description": "Big5 编码选项"
+    },
+    "encodingLatin1": {
+        "message": "ISO-8859-1 (Latin1)",
+        "description": "ISO-8859-1 (Latin1) 编码选项"
     }
 }

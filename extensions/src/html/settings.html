@@ -110,6 +110,17 @@
                 <input type="number" id="novel-line" name="novel-line" min="1" value="1">
                 <div class="description" data-i18n="startLineDesc">从第几行开始阅读（1 表示从头开始）</div>
             </div>
+            <!-- ADD THIS NEW ITEM BELOW -->
+            <div class="setting-item">
+                <label for="file-encoding" data-i18n="fileEncoding">文件编码：</label>
+                <select id="file-encoding" name="file-encoding">
+                    <option value="UTF-8" data-i18n="encodingUtf8">UTF-8 (默认)</option>
+                    <option value="GBK" data-i18n="encodingGbk">GBK</option>
+                    <option value="Big5" data-i18n="encodingBig5">Big5</option>
+                    <option value="ISO-8859-1" data-i18n="encodingLatin1">ISO-8859-1 (Latin1)</option>
+                </select>
+                <div class="description" data-i18n="fileEncodingDesc">尝试自动检测。如果不正确，请手动选择。</div>
+            </div>
         </div>
 
         <div class="setting-group">
@@ -190,6 +201,7 @@
 
         <button type="button" id="save-button" data-i18n="save">保存设置</button>
     </form>
+    <script src="../js/lib/jschardet.min.js"></script>
     <script src="../js/settings.js"></script>
 </body>
 

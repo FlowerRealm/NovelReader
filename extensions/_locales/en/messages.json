@@ -190,5 +190,29 @@
     "prevLine": {
         "message": "Previous Line",
         "description": "Description for the shortcut to read previous line"
+    },
+    "fileEncoding": {
+        "message": "File Encoding:",
+        "description": "Label for file encoding selection dropdown"
+    },
+    "fileEncodingDesc": {
+        "message": "Attempt to auto-detect. Select manually if incorrect.",
+        "description": "Description for file encoding selection"
+    },
+    "encodingUtf8": {
+        "message": "UTF-8 (Default)",
+        "description": "UTF-8 encoding option"
+    },
+    "encodingGbk": {
+        "message": "GBK",
+        "description": "GBK encoding option"
+    },
+    "encodingBig5": {
+        "message": "Big5",
+        "description": "Big5 encoding option"
+    },
+    "encodingLatin1": {
+        "message": "ISO-8859-1 (Latin1)",
+        "description": "ISO-8859-1 (Latin1) encoding option"
     }
 }
