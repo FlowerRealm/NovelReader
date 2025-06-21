@@ -63,33 +63,92 @@ I18nManager.updatePageText = function() { document.title = this.getMessage('sett
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const form = { /* ... (same as before, including pickFileButton, fileEncoding) ... */ };
-    // Form elements definition (ensure all are captured)
-    form.pickFileButton = document.getElementById('pick-file-button');
-    form.novelPathDisplay = document.getElementById('novel-path-display');
-    form.novelLine = document.getElementById('novel-line');
-    form.fontFamily = document.getElementById('font-family');
-    form.fontSize = document.getElementById('font-size');
-    form.lineHeight = document.getElementById('line-height');
-    form.textColor = document.getElementById('text-color');
-    form.opacity = document.getElementById('opacity');
-    form.opacityValue = document.getElementById('opacity-value');
-    form.hoverOpacity = document.getElementById('hover-opacity');
-    form.hoverOpacityValue = document.getElementById('hover-opacity-value');
-    form.textShadow = document.getElementById('text-shadow');
-    form.maxWidth = document.getElementById('max-width');
-    form.saveButton = document.getElementById('save-button');
-    form.previewText = document.getElementById('preview-text');
-    form.bgOpacity = document.getElementById('bg-opacity');
-    form.bgOpacityValue = document.getElementById('bg-opacity-value');
-    form.hoverBgOpacity = document.getElementById('hover-bg-opacity');
-    form.hoverBgOpacityValue = document.getElementById('hover-bg-opacity-value');
-    form.languageSelect = document.getElementById('language-select');
-    form.fileEncoding = document.getElementById('file-encoding');
-
+    const form = {
+        pickFileButton: document.getElementById('pick-file-button'),
+        novelPathDisplay: document.getElementById('novel-path-display'),
+        novelLine: document.getElementById('novel-line'),
+        fontFamily: document.getElementById('font-family'),
+        fontSize: document.getElementById('font-size'),
+        lineHeight: document.getElementById('line-height'),
+        textColor: document.getElementById('text-color'),
+        opacity: document.getElementById('opacity'),
+        opacityValue: document.getElementById('opacity-value'),
+        hoverOpacity: document.getElementById('hover-opacity'),
+        hoverOpacityValue: document.getElementById('hover-opacity-value'),
+        textShadow: document.getElementById('text-shadow'),
+        maxWidth: document.getElementById('max-width'),
+        saveButton: document.getElementById('save-button'),
+        previewText: document.getElementById('preview-text'),
+        bgOpacity: document.getElementById('bg-opacity'),
+        bgOpacityValue: document.getElementById('bg-opacity-value'),
+        hoverBgOpacity: document.getElementById('hover-bg-opacity'),
+        hoverBgOpacityValue: document.getElementById('hover-bg-opacity-value'),
+        languageSelect: document.getElementById('language-select'),
+        fileEncoding: document.getElementById('file-encoding'),
+        detectedEncodingFeedback: document.getElementById('detected-encoding-feedback') // New form element
+    };
 
     if (form.languageSelect) { /* ... (language selector init unchanged) ... */ }
-    async function detectAndSetEncoding(fileObject) { /* ... (same as before) ... */ }
+
+    async function detectAndSetEncoding(fileObject) {
+        if (!fileObject) {
+            if (form.detectedEncodingFeedback) form.detectedEncodingFeedback.textContent = '';
+            return;
+        }
+        const feedbackSpan = form.detectedEncodingFeedback; // Get the span
+
+        try {
+            const buffer = await readFileChunk(fileObject); // Reads first 4KB as Uint8Array
+            const detected = jschardet.detect(buffer); // jschardet is a placeholder
+
+            console.log('Detected encoding by placeholder jschardet:', detected);
+
+            if (detected && detected.encoding && detected.confidence > 0.1) { // Use a low threshold for placeholder
+                let matchedEncoding = null;
+                // Attempt to match detected encoding (case-insensitive) with dropdown values
+                for (const option of form.fileEncoding.options) {
+                    if (option.value.toUpperCase() === detected.encoding.toUpperCase()) {
+                        matchedEncoding = option.value;
+                        break;
+                    }
+                }
+                // Special case for ASCII, treat as UTF-8 for simplicity in dropdown
+                if (!matchedEncoding && detected.encoding.toUpperCase() === "ASCII") {
+                    matchedEncoding = "UTF-8";
+                }
+
+                if (matchedEncoding) {
+                    form.fileEncoding.value = matchedEncoding;
+                    if (feedbackSpan) {
+                        feedbackSpan.textContent = I18nManager.getMessage('detectionLowConfidence', [
+                            matchedEncoding,
+                            (detected.confidence * 100).toFixed(0) + '%' // Show confidence from jschardet
+                        ]);
+                    }
+                } else { // Detected encoding not in our dropdown list
+                    form.fileEncoding.value = "UTF-8"; // Default to UTF-8
+                    if (feedbackSpan) {
+                        // Using detectionUncertain for simplicity or create a new i18n key for this specific case
+                        feedbackSpan.textContent = I18nManager.getMessage('detectionUncertain') +
+                                                   ` (${I18nManager.getMessage('detectedEncodingWas', [detected.encoding])})`;
+                        // This requires a new key "detectedEncodingWas": "Detected: $1."
+                        console.warn(`Detected encoding '${detected.encoding}' (conf: ${detected.confidence}) not in dropdown, defaulted to UTF-8.`);
+                    }
+                }
+            } else {
+                form.fileEncoding.value = "UTF-8"; // Default if detection fails or confidence too low
+                if (feedbackSpan) {
+                    feedbackSpan.textContent = I18nManager.getMessage('detectionUncertain');
+                }
+            }
+        } catch (error) {
+            console.error('Error detecting encoding:', error);
+            form.fileEncoding.value = "UTF-8"; // Default on error
+            if (feedbackSpan) {
+                feedbackSpan.textContent = I18nManager.getMessage('detectionUncertain'); // Or a specific error message
+            }
+        }
+    }
 
     if (form.pickFileButton) {
         form.pickFileButton.addEventListener('click', async () => {

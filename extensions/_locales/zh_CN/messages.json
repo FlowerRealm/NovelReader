@@ -236,5 +236,24 @@
                 "example": "我的小说.txt"
             }
         }
+    },
+    "detectionLowConfidence": {
+        "message": "检测到编码：$encoding$ (置信度：$confidence$)。如果结果不正确，请核实或手动选择。",
+        "description": "当检测到编码但可能需要验证时的反馈信息。",
+        "placeholders": {
+            "encoding": { "content": "$1", "example": "UTF-8" },
+            "confidence": { "content": "$2", "example": "低 (占位符)" }
+        }
+    },
+    "detectionUncertain": {
+        "message": "自动检测不确定。默认使用 UTF-8。请手动选择编码。",
+        "description": "自动检测编码不确定时的反馈信息。"
+    },
+    "detectedEncodingWas": {
+        "message": "检测到：$encoding$。",
+        "description": "当检测到的编码不在下拉列表中时，部分消息指示检测到的编码。",
+        "placeholders": {
+            "encoding": { "content": "$1", "example": "Shift_JIS" }
+        }
     }
 }

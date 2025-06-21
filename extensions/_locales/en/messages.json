@@ -236,5 +236,24 @@
                 "example": "my_novel.txt"
             }
         }
+    },
+    "detectionLowConfidence": {
+        "message": "Detected: $encoding$ (Confidence: $confidence$). Please verify or select manually if incorrect.",
+        "description": "Feedback when encoding is detected but might need verification.",
+        "placeholders": {
+            "encoding": { "content": "$1", "example": "UTF-8" },
+            "confidence": { "content": "$2", "example": "Low (Placeholder)" }
+        }
+    },
+    "detectionUncertain": {
+        "message": "Auto-detection uncertain. Defaulting to UTF-8. Please select encoding manually.",
+        "description": "Feedback when auto-detection of encoding is uncertain."
+    },
+    "detectedEncodingWas": {
+        "message": "Detected: $encoding$.",
+        "description": "Part of a message indicating what encoding was detected when it's not in the dropdown.",
+        "placeholders": {
+            "encoding": { "content": "$1", "example": "Shift_JIS" }
+        }
     }
 }
