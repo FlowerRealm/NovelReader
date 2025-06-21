@@ -171,7 +171,35 @@ class NovelReader {
 NovelReader.prototype.createContainer = function() { /*...*/ }; NovelReader.prototype.savePosition = async function() {/*...*/}; NovelReader.prototype.loadPosition = async function() {/*...*/}; NovelReader.prototype.updateContentStyle = function() {/*...*/}; NovelReader.prototype.updateStyle = function() {/*...*/}; NovelReader.prototype.initializeEventListeners = function() {/*...*/}; NovelReader.prototype.handleKeyDown = async function(e) {/*...*/}; NovelReader.prototype.toggleVisibility = async function() {/*...*/}; NovelReader.prototype.nextPage = async function() {if(this.currentLine<this.lines.length-1){this.currentLine++; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}}; NovelReader.prototype.previousPage = async function() {if(this.currentLine>0){this.currentLine--; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}};
 NovelReader.prototype.updateContent = function() { if(!this.content || !this.measureContainer) { console.warn("updateContent called before essential UI is ready."); return; } let textToDisplay = ""; if (this.lines && typeof this.currentLine === 'number' && this.currentLine >= 0 && this.lines.length > this.currentLine && this.lines[this.currentLine] !== undefined) { textToDisplay = this.lines[this.currentLine]; } else if (this.defaultMessages && this.defaultMessages.noContent !== undefined) { textToDisplay = this.defaultMessages.noContent; } this.content.textContent = (textToDisplay === null || textToDisplay === undefined) ? "" : String(textToDisplay).trim(); if (this.content.style && this.settings) { this.measureContainer.textContent = this.content.textContent; this.measureContainer.style.fontSize = this.content.style.fontSize || (this.settings.fontSize ? this.settings.fontSize + 'px' : '14px'); this.measureContainer.style.fontFamily = this.content.style.fontFamily || this.settings.fontFamily || 'Arial'; } try { if (this.container && this.measureContainer.offsetWidth !== undefined && this.measureContainer.offsetWidth > 0) { const textWidth = this.measureContainer.offsetWidth; const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0; const maxWidth = Math.min(textWidth, screenWidth > 0 ? screenWidth * 0.5 : textWidth); this.container.style.width = maxWidth + 'px'; } else if (this.container) { this.container.style.width = 'auto'; } } catch(e) { console.warn("Error calculating text width:", e); if(this.container) { this.container.style.width = 'auto'; } } };
 NovelReader.prototype.startAutoHideTimer = function() { if (this.autoHideTimer) { clearTimeout(this.autoHideTimer); } this.autoHideTimer = setTimeout(() => { if(this.container) this.container.style.opacity = this.settings.opacity; }, 3000); };
-NovelReader.prototype.initialize = async function() { this.updateMessages(); this.createContainer(); await this.settings.load(); await this.loadPosition(); this.updateStyle(); this.initializeEventListeners(); const isVisible = await StorageManager.get('isVisible'); if (this.container) { this.container.style.display = isVisible === false ? 'none' : 'block'; } await this.initializeReaderContent(); };
+NovelReader.prototype.initialize = async function() {
+   this.updateMessages();
+   this.createContainer();
+
+   // Ensure DOM changes from createContainer are processed
+   await Promise.resolve();
+
+   // Guard clause for critical UI elements
+   if (!this.container || !this.content || !this.measureContainer) {
+       console.error("Reader: Critical UI elements (container, content, or measureContainer) not properly created. Aborting further UI initialization for this instance.");
+       return;
+   }
+
+   await this.settings.load();
+   await this.loadPosition();
+
+   // Only call updateStyle (and thus the first updateContent) if elements are confirmed ready
+   this.updateStyle();
+
+   this.initializeEventListeners();
+
+   const isVisible = await StorageManager.get('isVisible');
+   // The this.container check here is good, as isVisible might be from storage before UI is fully set.
+   if (this.container) {
+       this.container.style.display = isVisible === false ? 'none' : 'block';
+   }
+
+   await this.initializeReaderContent();
+};
 
 
 if (document.readyState === "complete" || document.readyState === "interactive") { new NovelReader().initialize(); }
