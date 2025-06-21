@@ -226,5 +226,15 @@
     "fileReadError": {
         "message": "Error reading file. The file might be corrupted or inaccessible.",
         "description": "Error message when reading the file content fails"
+    },
+    "reloadNovelInSettings": {
+        "message": "Novel '%fileName%' not loaded in current session. Please re-load via Settings page.",
+        "description": "Message shown when novel content is not in session cache.",
+        "placeholders": {
+            "fileName": {
+                "content": "$1",
+                "example": "my_novel.txt"
+            }
+        }
     }
 }

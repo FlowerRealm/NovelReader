@@ -1,333 +1,185 @@
-// Add this at the very top
-try {
-    importScripts('db_utils.js');
-} catch (e) {
-    console.error("Failed to import db_utils.js", e);
-}
+// extensions/src/js/background.js
 
-// 确保在扩展启动时初始化
+// No longer using db_utils.js:
+// try {
+//     importScripts('db_utils.js');
+// } catch (e) {
+//     console.error("Failed to import db_utils.js", e);
+// }
+
+// In-memory cache for novel lines for the current session (service worker lifetime)
+let currentNovelLinesCache = null;
+let currentNovelFileNameCache = null;
+
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('扩展已安装/更新');
-
     try {
-        // 初始化必要的存储变量
         const locale = await StorageManager.get('preferredLocale');
-        if (!locale) {
-            await StorageManager.set('preferredLocale', 'en');
-            console.log('已初始化默认语言设置');
-        }
+        if (!locale) { await StorageManager.set('preferredLocale', 'en'); console.log('已初始化默认语言设置'); }
 
-        // 初始化阅读器显示状态
         const isVisible = await StorageManager.get('isVisible');
-        if (isVisible === null) {
-            await StorageManager.set('isVisible', true);
-            console.log('已初始化阅读器显示状态');
-        }
+        if (isVisible === null) { await StorageManager.set('isVisible', true); console.log('已初始化阅读器显示状态'); }
 
-        // 初始化阅读器设置
         const readerSettings = await StorageManager.get('readerSettings');
         if (!readerSettings) {
             const defaultSettings = {
-                fontFamily: 'Arial',
-                fontSize: 14,
-                lineHeight: 1.5,
-                textColor: '#000000',
-                opacity: 0.85,
-                hoverOpacity: 0.95,
-                textShadow: true,
-                maxWidth: 50,
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                hoverBackgroundColor: 'rgba(255, 255, 255, 0.95)'
+                fontFamily: 'Arial', fontSize: 14, lineHeight: 1.5, textColor: '#000000',
+                opacity: 0.85, hoverOpacity: 0.95, textShadow: true, maxWidth: 50,
+                backgroundColor: 'rgba(255, 255, 255, 0.85)', hoverBackgroundColor: 'rgba(255, 255, 255, 0.95)'
             };
             await StorageManager.set('readerSettings', defaultSettings);
             console.log('已初始化阅读器默认设置');
         }
 
-        // 初始化阅读位置
         const currentLine = await StorageManager.get('currentLine');
-        if (currentLine === null) {
-            await StorageManager.set('currentLine', 1);
-            console.log('已初始化阅读行号');
-        }
+        if (currentLine === null) { await StorageManager.set('currentLine', 1); console.log('已初始化阅读行号'); }
 
-        // 初始化阅读器位置
         const readerPosition = await StorageManager.get('readerPosition');
-        if (!readerPosition) {
-            await StorageManager.set('readerPosition', { left: '10px', top: '10px' });
-            console.log('已初始化阅读器位置');
-        }
+        if (!readerPosition) { await StorageManager.set('readerPosition', { left: '10px', top: '10px' }); console.log('已初始化阅读器位置');}
 
-    } catch (error) {
-        console.error('初始化存储变量失败:', error);
-    }
+        // Clean up old storage keys that are no longer used with the new session-based approach
+        await new Promise(resolve => chrome.storage.local.remove(['novelContent', 'novelLines'], () => {
+            if (chrome.runtime.lastError) { console.warn("Error during cleanup of old storage keys:", chrome.runtime.lastError.message); }
+            else { console.log("Cleaned up old novel content/metadata storage keys from chrome.storage.local."); }
+            resolve();
+        }));
+        // Also clear session cache on install/update
+        currentNovelLinesCache = null;
+        currentNovelFileNameCache = null;
+
+    } catch (error) { console.error('初始化存储变量失败:', error); }
 });
 
-// 在扩展启动时主动建立连接
 chrome.runtime.onStartup.addListener(() => {
     console.log('扩展已启动');
+    // Clear session cache on browser startup as well, as service worker might have been terminated.
+    currentNovelLinesCache = null;
+    currentNovelFileNameCache = null;
 });
 
-// 存储管理类
 class StorageManager {
     static async get(key) {
         return new Promise((resolve, reject) => {
             try {
                 chrome.storage.local.get(key, (result) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('Storage get error:', chrome.runtime.lastError);
-                        reject(chrome.runtime.lastError);
-                    } else {
-                        resolve(result[key] ?? null);
-                    }
+                    if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); }
+                    else { resolve(result[key] ?? null); }
                 });
-            } catch (error) {
-                console.error('Storage get error:', error);
-                reject(error);
-            }
+            } catch (error) { reject(error); }
         });
     }
 
-    static async set(key, value) {
-        if (value === undefined || value === null || value === '') {
-            throw new Error('存储值不能为空');
+    static async set(key, value) { // value can be any serializable type for chrome.storage.local
+        // The check for empty/null/undefined was specific to certain uses,
+        // let's make set more generic and callers can validate if needed.
+        // Or, if we want to keep this strictness for general settings:
+        if (value === undefined || value === null || value === '') { // Retaining strict check for general settings
+             console.warn(`StorageManager.set called with empty value for key: ${key}`);
+             // Not throwing error here to allow settings to be cleared with e.g. empty string if desired by a specific call.
+             // However, for this extension, most settings expect valid values.
+             // The original error was because `null` was passed to clear novelLines.
+             // That specific path is now removed.
         }
-
         return new Promise((resolve, reject) => {
             try {
                 chrome.storage.local.set({ [key]: value }, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('Storage set error:', chrome.runtime.lastError);
-                        reject(chrome.runtime.lastError);
-                    } else {
-                        resolve(true);
-                    }
+                    if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); }
+                    else { resolve(true); }
                 });
-            } catch (error) {
-                console.error('Storage set error:', error);
-                reject(error);
-            }
+            } catch (error) { reject(error); }
         });
     }
-
-    static async validate(value) {
-        return value !== undefined && value !== null && value !== '';
-    }
 }
 
-// 语言管理类
 class LanguageManager {
-    static async getCurrentLocale() {
-        try {
-            const locale = await StorageManager.get('preferredLocale');
-            console.log('Current locale:', locale);
-            return locale || 'en';
-        } catch (error) {
-            console.error('获取语言设置失败:', error);
-            return 'en';
-        }
-    }
-
-    static async setLocale(locale) {
-        try {
-            console.log('正在设置语言:', locale);
-            if (!['zh_CN', 'en'].includes(locale)) {
-                throw new Error(`不支持的语言: ${locale}`);
-            }
-
-            // 先保存语言设置
-            await StorageManager.set('preferredLocale', locale);
-
-            // 广播语言变更消息到所有标签页
-            const tabs = await chrome.tabs.query({});
-            const notificationPromises = tabs.map(async tab => {
-                if (!tab.url || !tab.id) {
-                    return; // 跳过无效的标签页
-                }
-
-                // 检查标签页是否可访问
-                if (tab.url.startsWith('http') ||
-                    tab.url.startsWith('https') ||
-                    tab.url.startsWith(chrome.runtime.getURL(''))) {
-                    try {
-                        // 使用 sendMessage 的 Promise 版本
-                        await new Promise((resolve, reject) => {
-                            chrome.tabs.sendMessage(tab.id, {
-                                action: 'localeChanged',
-                                locale: locale
-                            }, (response) => {
-                                const err = chrome.runtime.lastError;
-                                if (err) {
-                                    // 如果是连接错误，我们认为这是正常的，不需要记录错误
-                                    if (err.message.includes('Could not establish connection')) {
-                                        resolve();
-                                    } else {
-                                        reject(err);
-                                    }
-                                } else {
-                                    resolve(response);
-                                }
-                            });
-                        });
-                    } catch (err) {
-                        // 只有在不是连接错误的情况下才记录
-                        if (!err.message.includes('Could not establish connection')) {
-                            console.warn(`向标签页 ${tab.id} 发送消息时出现预期之外的错误:`, err);
-                        }
-                    }
-                }
-            });
-
-            // 等待所有通知完成，但忽略个别失败
-            await Promise.allSettled(notificationPromises);
-
-            return true;
-        } catch (error) {
-            console.error('设置语言失败:', error);
-            throw error;
-        }
-    }
+    static async getCurrentLocale() { /* ... (same as before) ... */ }
+    static async setLocale(locale) { /* ... (same as before, including broadcast) ... */ }
 }
+// Full LanguageManager definition
+LanguageManager.getCurrentLocale = async function() { try { const locale = await StorageManager.get('preferredLocale'); return locale || 'en'; } catch (error) { console.error('获取语言设置失败:', error); return 'en'; } };
+LanguageManager.setLocale = async function(locale) { try { if (!['zh_CN', 'en'].includes(locale)) { throw new Error(`不支持的语言: ${locale}`); } await StorageManager.set('preferredLocale', locale); const tabs = await chrome.tabs.query({}); const notificationPromises = tabs.map(async tab => { if (!tab.url || !tab.id) { return; } if (tab.url.startsWith('http') || tab.url.startsWith('https') || tab.url.startsWith(chrome.runtime.getURL(''))) { try { await new Promise((resolve, reject) => { chrome.tabs.sendMessage(tab.id, { action: 'localeChanged', locale: locale }, (response) => { const err = chrome.runtime.lastError; if (err) { if (err.message.includes('Could not establish connection')) { resolve(); } else { reject(err); } } else { resolve(response); } }); }); } catch (err) { if (!err.message.includes('Could not establish connection')) { console.warn(`向标签页 ${tab.id} 发送消息时出现预期之外的错误:`, err); } } } }); await Promise.allSettled(notificationPromises); return true; } catch (error) { console.error('设置语言失败:', error); throw error; } };
 
-// 建立长连接处理
-chrome.runtime.onConnect.addListener((port) => {
-    console.log('新连接已建立:', port.name);
 
-    port.onDisconnect.addListener(() => {
-        console.log('连接已断开:', port.name);
-        if (chrome.runtime.lastError) {
-            console.error('连接断开错误:', chrome.runtime.lastError);
-        }
-    });
+chrome.action.onClicked.addListener(() => { chrome.tabs.create({ url: chrome.runtime.getURL("src/html/settings.html") }); });
 
-    port.onMessage.addListener((msg) => {
-        console.log('收到长连接消息:', msg);
-    });
-});
-
-// 打开设置页面
-chrome.action.onClicked.addListener(() => {
-    chrome.tabs.create({
-        url: chrome.runtime.getURL("src/html/settings.html")
-    });
-});
-
-// 全局消息处理
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('收到消息:', message, '来自:', sender);
-
-    // 立即返回true以保持消息通道开启
-    const keepChannelOpen = true;
-
-    // 检查扩展状态
-    if (!chrome.runtime.id) {
-        console.error('扩展连接已断开');
-        sendResponse({ success: false, error: '扩展连接已断开' });
-        return keepChannelOpen;
-    }
-
-    // 异步消息处理
+    const isAsync = true; // Indicate that sendResponse might be called asynchronously
     (async () => {
         try {
-            if (!message || !message.action) {
-                throw new Error('无效的消息格式');
-            }
-
-            let response;
+            if (!message || !message.action) { throw new Error('无效的消息格式'); }
+            let responsePayload;
             switch (message.action) {
                 case 'getCurrentLocale':
                     const locale = await LanguageManager.getCurrentLocale();
-                    response = { success: true, data: locale };
+                    responsePayload = { success: true, data: locale };
                     break;
-
                 case 'setLocale':
-                    if (!message.value) {
-                        throw new Error('缺少语言设置参数');
-                    }
+                    if (message.value === undefined) { throw new Error('Locale value not provided for setLocale.'); }
                     await LanguageManager.setLocale(message.value);
-                    response = { success: true, data: true };
+                    responsePayload = { success: true, data: true };
                     break;
-
                 case 'getStorage':
-                    if (!message.key) {
-                        throw new Error('缺少存储键名');
-                    }
+                    if (!message.key) { throw new Error('Key not provided for getStorage.'); }
                     const data = await StorageManager.get(message.key);
-                    response = { success: true, data };
+                    responsePayload = { success: true, data: data };
                     break;
-
                 case 'setStorage':
-                    if (!message.key || message.value === undefined) {
-                        throw new Error('缺少必要的存储参数');
-                    }
+                    if (!message.key) { throw new Error('Key not provided for setStorage.'); }
+                    // Value can be null/empty if a setting is being cleared explicitly,
+                    // but StorageManager.set might still have its own rules.
+                    // For this extension, settings are generally non-empty if set.
+                    if (message.value === undefined ) { throw new Error('Value not provided for setStorage.');}
                     await StorageManager.set(message.key, message.value);
-                    response = { success: true };
+                    responsePayload = { success: true };
                     break;
-
                 case 'removeStorage':
-                    if (!message.key) {
-                        throw new Error('Key not provided for removing from storage.');
-                    }
-                    await new Promise((resolveRemove, rejectRemove) => {
+                    if (!message.key) { throw new Error('Key not provided for removeStorage.'); }
+                    await new Promise((resolve, reject) => {
                         chrome.storage.local.remove(message.key, () => {
-                            if (chrome.runtime.lastError) {
-                                console.error('Error removing item from storage:', message.key, chrome.runtime.lastError.message);
-                                rejectRemove(new Error(chrome.runtime.lastError.message));
-                            } else {
-                                console.log('Successfully removed from storage:', message.key);
-                                resolveRemove();
-                            }
+                            if (chrome.runtime.lastError) { reject(new Error(chrome.runtime.lastError.message)); }
+                            else { console.log(`Storage key '${message.key}' removed.`); resolve(); }
                         });
                     });
-                    response = { success: true };
+                    responsePayload = { success: true };
                     break;
-
-                // New cases for IndexedDB operations:
-                case 'storeFileHandleInDB':
-                    if (!message.handle) { // Check if handle is provided in the message
-                        throw new Error('File handle not provided for storing.');
-                    }
-                    await storeFileHandle(message.handle); // Assumes storeFileHandle is now global via importScripts
-                    response = { success: true };
-
-                    // NEW: Broadcast that a new handle has been stored
+                case 'cacheNovelForSession':
+                    if (!message.lines || message.fileName === undefined) { throw new Error('Lines or fileName not provided for caching.'); }
+                    currentNovelLinesCache = message.lines;
+                    currentNovelFileNameCache = message.fileName;
+                    console.log(`Novel '${message.fileName}' (${currentNovelLinesCache.length} lines) cached in background.`);
                     const tabs = await chrome.tabs.query({});
                     tabs.forEach(tab => {
                         if (tab.id) {
-                            chrome.tabs.sendMessage(tab.id, { action: 'fileHandleStored' }).catch(err => {
-                                if (!err.message.includes('Could not establish connection')) {
-                                    console.warn(`Error broadcasting fileHandleStored to tab ${tab.id}:`, err.message);
+                            chrome.tabs.sendMessage(tab.id, {
+                                action: 'novelLinesUpdated',
+                                lines: currentNovelLinesCache,
+                                fileName: currentNovelFileNameCache
+                            }).catch(err => {
+                                if (err.message && !err.message.includes('Could not establish connection')) {
+                                    console.warn(`Error broadcasting novelLinesUpdated to tab ${tab.id}:`, err.message);
                                 }
                             });
                         }
                     });
+                    responsePayload = { success: true };
                     break;
-
-                case 'getFileHandleFromDB':
-                    const handle = await getFileHandle(); // Assumes getFileHandle is now global
-                    response = { success: true, data: handle };
+                case 'getNovelLinesFromSessionCache':
+                    responsePayload = { success: true, data: { lines: currentNovelLinesCache, fileName: currentNovelFileNameCache } };
                     break;
-
-                case 'deleteFileHandleFromDB':
-                    await deleteFileHandle(); // Assumes deleteFileHandle is now global
-                    response = { success: true };
+                case 'clearNovelSessionCache':
+                    currentNovelLinesCache = null;
+                    currentNovelFileNameCache = null;
+                    console.log("Novel session cache cleared.");
+                    responsePayload = { success: true };
                     break;
-
                 default:
-                    throw new Error('未知的操作类型：' + message.action);
+                    throw new Error(`未知的操作类型 (Unknown action type): ${message.action}`);
             }
-
-            if (!sender.tab || chrome.runtime.lastError) {
-                console.warn('发送响应时发生错误:', chrome.runtime.lastError);
-            }
-            sendResponse(response);
+            if (typeof sendResponse === 'function') sendResponse(responsePayload);
         } catch (error) {
-            console.error('消息处理失败:', error);
-            sendResponse({
-                success: false,
-                error: error.message || '未知错误'
-            });
+            console.error('消息处理失败 (Message handling failed):', error, "Original message:", message);
+            if (typeof sendResponse === 'function') sendResponse({ success: false, error: error.message || '未知错误 (Unknown error)' });
         }
     })();
-
-    return keepChannelOpen;
+    return isAsync; // Required for async sendResponse
 });

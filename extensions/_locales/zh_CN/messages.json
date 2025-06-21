@@ -226,5 +226,15 @@
     "fileReadError": {
         "message": "读取文件时出错。文件可能已损坏或无法访问。",
         "description": "读取文件内容失败时的错误信息"
+    },
+    "reloadNovelInSettings": {
+        "message": "小说 '%fileName%' 未在当前会话加载。请通过设置页面重新加载。",
+        "description": "当小说内容不在会话缓存中时显示的消息。",
+        "placeholders": {
+            "fileName": {
+                "content": "$1",
+                "example": "我的小说.txt"
+            }
+        }
     }
 }
