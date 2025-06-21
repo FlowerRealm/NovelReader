@@ -94,7 +94,7 @@ class I18nManager {
     }
 
     static getMessage(key, substitutions = undefined) {
-        return chrome.i18n.getMessage(key, substitutions) || key;
+        const message = chrome.i18n.getMessage(key, substitutions); return message || `[i18n-key: ${key}]`;
     }
 
     static updatePageText() {

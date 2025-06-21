@@ -125,9 +125,9 @@ class NovelReader {
         this.autoHideTimer = null;
         // 使用 i18n API 获取本地化消息
         this.defaultMessages = {
-            noContent: chrome.i18n.getMessage('noContent'),
-            parseError: chrome.i18n.getMessage('parseError'),
-            unsupportedFormat: chrome.i18n.getMessage('unsupportedFormat')
+            noContent: chrome.i18n.getMessage('noContent') || "[i18n-key: noContent]",
+            parseError: chrome.i18n.getMessage('parseError') || "[i18n-key: parseError]",
+            unsupportedFormat: chrome.i18n.getMessage('unsupportedFormat') || "[i18n-key: unsupportedFormat]"
         };
 
         // 监听语言变更事件
@@ -142,9 +142,9 @@ class NovelReader {
     // 新增：更新本地化消息
     updateMessages() {
         this.defaultMessages = {
-            noContent: chrome.i18n.getMessage('noContent') || '请在设置中设置小说内容',
-            parseError: chrome.i18n.getMessage('parseError') || '解析文件失败，请确保文件格式正确',
-            unsupportedFormat: chrome.i18n.getMessage('unsupportedFormat') || '暂不支持该格式'
+            noContent: chrome.i18n.getMessage('noContent') || "[i18n-key: noContent]",
+            parseError: chrome.i18n.getMessage('parseError') || "[i18n-key: parseError]",
+            unsupportedFormat: chrome.i18n.getMessage('unsupportedFormat') || "[i18n-key: unsupportedFormat]"
         };
     }
 
