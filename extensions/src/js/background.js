@@ -263,6 +263,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     response = { success: true };
                     break;
 
+                case 'removeStorage':
+                    if (!message.key) {
+                        throw new Error('Key not provided for removing from storage.');
+                    }
+                    await new Promise((resolveRemove, rejectRemove) => {
+                        chrome.storage.local.remove(message.key, () => {
+                            if (chrome.runtime.lastError) {
+                                console.error('Error removing item from storage:', message.key, chrome.runtime.lastError.message);
+                                rejectRemove(new Error(chrome.runtime.lastError.message));
+                            } else {
+                                console.log('Successfully removed from storage:', message.key);
+                                resolveRemove();
+                            }
+                        });
+                    });
+                    response = { success: true };
+                    break;
+
                 // New cases for IndexedDB operations:
                 case 'storeFileHandleInDB':
                     if (!message.handle) { // Check if handle is provided in the message

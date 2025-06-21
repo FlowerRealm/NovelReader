@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await sendMessageAsync('setStorage', 'currentLine', 1);
 
                 // Clear old storage formats
-                await sendMessageAsync('setStorage', 'novelLines', null);
-                await sendMessageAsync('setStorage', 'novelContent', null); // ADD THIS LINE
+                await sendMessageAsync('removeStorage', 'novelLines');
+                await sendMessageAsync('removeStorage', 'novelContent');
 
                 alert(`File '${file.name}' selected and handle stored. Adjust encoding if needed and save settings to confirm.`);
                 updateButtonState();
