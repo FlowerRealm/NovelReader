@@ -5,31 +5,18 @@
     "description": "__MSG_appDesc__",
     "default_locale": "en",
     "background": {
-        "service_worker": "src/js/background.js",
-        "type": "module"
+        "service_worker": "src/js/background.js"
     },
     "action": {
         "default_title": "NovelReader"
     },
     "permissions": [
-        "cookies",
         "storage",
         "activeTab",
         "tabs"
     ],
     "host_permissions": [
         "<all_urls>"
-    ],
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "src/js/*",
-                "src/html/*"
-            ],
-            "matches": [
-                "<all_urls>"
-            ]
-        }
     ],
     "content_scripts": [
         {
