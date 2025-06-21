@@ -143,10 +143,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     responsePayload = { success: true };
                     break;
                 case 'cacheNovelForSession':
-                    if (!message.lines || message.fileName === undefined) { throw new Error('Lines or fileName not provided for caching.'); }
-                    currentNovelLinesCache = message.lines;
-                    currentNovelFileNameCache = message.fileName;
-                    console.log(`Novel '${message.fileName}' (${currentNovelLinesCache.length} lines) cached in background.`);
+                    if (!message.value || !message.value.lines || message.value.fileName === undefined) {
+                        throw new Error('Lines or fileName not provided in message.value for caching.');
+                    }
+                    currentNovelLinesCache = message.value.lines;
+                    currentNovelFileNameCache = message.value.fileName;
+
+                    const numLines = Array.isArray(currentNovelLinesCache) ? currentNovelLinesCache.length : 0;
+                    console.log(`Novel '${currentNovelFileNameCache}' (${numLines} lines) cached in background.`);
+
                     const tabs = await chrome.tabs.query({});
                     tabs.forEach(tab => {
                         if (tab.id) {
