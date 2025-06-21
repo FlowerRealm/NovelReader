@@ -160,7 +160,54 @@ class NovelReader {
     async toggleVisibility() { /* ... same as before ... */ }
     async nextPage() { /* ... same as before ... */ }
     async previousPage() { /* ... same as before ... */ }
-    updateContent() { /* ... same as before ... */ }
+    updateContent() {
+        if(!this.content || !this.measureContainer) {
+            // If essential UI elements aren't ready, don't proceed.
+            // This might happen if updateContent is called too early.
+            console.warn("updateContent called before essential UI (this.content or this.measureContainer) is ready.");
+            return;
+        }
+
+        let textToDisplay = ""; // Default to empty string
+
+        if (this.lines && typeof this.currentLine === 'number' && this.currentLine >= 0 && this.lines.length > this.currentLine && this.lines[this.currentLine] !== undefined) {
+            textToDisplay = this.lines[this.currentLine];
+        } else if (this.defaultMessages && this.defaultMessages.noContent !== undefined) {
+            textToDisplay = this.defaultMessages.noContent;
+        }
+
+        // Ensure textToDisplay is always a string before trim()
+        // String() conversion handles null or undefined gracefully, turning them into "null" or "undefined"
+        // which then trim correctly. If we want them to be empty string instead for trim:
+        this.content.textContent = (textToDisplay === null || textToDisplay === undefined) ? "" : String(textToDisplay).trim();
+
+        // Update measure container and width
+        // Ensure this.content.style exists (it should if this.content exists and is a DOM element)
+        // and settings are loaded for fallback font sizes/families.
+        if (this.content.style && this.settings) {
+            this.measureContainer.textContent = this.content.textContent;
+            this.measureContainer.style.fontSize = this.content.style.fontSize || (this.settings.fontSize ? this.settings.fontSize + 'px' : '14px');
+            this.measureContainer.style.fontFamily = this.content.style.fontFamily || this.settings.fontFamily || 'Arial';
+        }
+
+        try {
+            // Ensure measureContainer has been rendered and has dimensions
+            if (this.container && this.measureContainer.offsetWidth !== undefined && this.measureContainer.offsetWidth > 0) {
+                const textWidth = this.measureContainer.offsetWidth;
+                // Ensure window.innerWidth is available and positive
+                const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+                const maxWidth = Math.min(textWidth, screenWidth > 0 ? screenWidth * 0.5 : textWidth);
+                this.container.style.width = maxWidth + 'px';
+            } else if (this.container) {
+                 this.container.style.width = 'auto';
+            }
+        } catch(e) {
+            console.warn("Error calculating text width in updateContent:", e);
+            if(this.container) {
+                this.container.style.width = 'auto';
+            }
+        }
+    }
     startAutoHideTimer() { /* ... same as before ... */ }
 
     // Copy-pasted unchanged methods for brevity in generation, assume they are here
