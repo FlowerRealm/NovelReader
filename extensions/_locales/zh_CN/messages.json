@@ -214,5 +214,17 @@
     "encodingLatin1": {
         "message": "ISO-8859-1 (Latin1)",
         "description": "ISO-8859-1 (Latin1) 编码选项"
+    },
+    "pickNovelFile": {
+        "message": "选择小说文件 (现代方式)",
+        "description": "使用 File System Access API 选择小说文件的按钮文本"
+    },
+    "permissionDeniedError": {
+        "message": "文件读取权限被拒绝。请在设置中重新选择文件并授予权限。",
+        "description": "文件读取权限被拒绝时的错误信息"
+    },
+    "fileReadError": {
+        "message": "读取文件时出错。文件可能已损坏或无法访问。",
+        "description": "读取文件内容失败时的错误信息"
     }
 }

@@ -1,3 +1,10 @@
+// Add this at the very top
+try {
+    importScripts('db_utils.js');
+} catch (e) {
+    console.error("Failed to import db_utils.js", e);
+}
+
 // 确保在扩展启动时初始化
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('扩展已安装/更新');
@@ -253,6 +260,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         throw new Error('缺少必要的存储参数');
                     }
                     await StorageManager.set(message.key, message.value);
+                    response = { success: true };
+                    break;
+
+                // New cases for IndexedDB operations:
+                case 'storeFileHandleInDB':
+                    if (!message.handle) { // Check if handle is provided in the message
+                        throw new Error('File handle not provided for storing.');
+                    }
+                    await storeFileHandle(message.handle); // Assumes storeFileHandle is now global via importScripts
+                    response = { success: true };
+
+                    // NEW: Broadcast that a new handle has been stored
+                    const tabs = await chrome.tabs.query({});
+                    tabs.forEach(tab => {
+                        if (tab.id) {
+                            chrome.tabs.sendMessage(tab.id, { action: 'fileHandleStored' }).catch(err => {
+                                if (!err.message.includes('Could not establish connection')) {
+                                    console.warn(`Error broadcasting fileHandleStored to tab ${tab.id}:`, err.message);
+                                }
+                            });
+                        }
+                    });
+                    break;
+
+                case 'getFileHandleFromDB':
+                    const handle = await getFileHandle(); // Assumes getFileHandle is now global
+                    response = { success: true, data: handle };
+                    break;
+
+                case 'deleteFileHandleFromDB':
+                    await deleteFileHandle(); // Assumes deleteFileHandle is now global
                     response = { success: true };
                     break;
 

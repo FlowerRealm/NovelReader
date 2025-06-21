@@ -100,9 +100,9 @@
             </div>
             <div class="setting-item">
                 <label for="novel-path" data-i18n="novelFile">小说文件：</label>
-                <input type="file" id="novel-path" name="novel-path" accept=".txt,.md,.markdown">
-                <span id="novel-path-display" style="margin-left: 10px; color: gray;"
-                    data-i18n="noFileSelected">未选择文件</span>
+                <button type="button" id="pick-file-button" data-i18n="pickNovelFile" style="margin-right: 10px;">选择文件</button>
+                <input type="file" id="novel-path" name="novel-path" accept=".txt,.md,.markdown" style="display:none;">
+                <span id="novel-path-display" style="color: gray;" data-i18n="noFileSelected">未选择文件</span>
                 <div class="description" data-i18n="novelFileDesc">支持的格式：TXT、Markdown文件（.md/.markdown）</div>
             </div>
             <div class="setting-item">

@@ -214,5 +214,17 @@
     "encodingLatin1": {
         "message": "ISO-8859-1 (Latin1)",
         "description": "ISO-8859-1 (Latin1) encoding option"
+    },
+    "pickNovelFile": {
+        "message": "Choose Novel File (Modern)",
+        "description": "Button text for picking a novel file using File System Access API"
+    },
+    "permissionDeniedError": {
+        "message": "Permission to read the file was denied. Please re-select the file in settings and grant permission.",
+        "description": "Error message when file read permission is denied"
+    },
+    "fileReadError": {
+        "message": "Error reading file. The file might be corrupted or inaccessible.",
+        "description": "Error message when reading the file content fails"
     }
 }
