@@ -9,129 +9,76 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <windows.h>
-#include <limits> // Required for std::numeric_limits
+#include <limits>    // Required for std::numeric_limits
+
+#ifdef _WIN32
+#include <windows.h> // For SetConsoleOutputCP only on Windows
+#endif
+
+#include "file_system_utils.h"
+#include "platform_utils.h"    // Include the new platform utilities
 
 // Global variables
-std::fstream config_stream; // Renamed to avoid conflict with a potential local variable name
-std::fstream novel_stream;  // Renamed for clarity
+std::fstream novel_stream;
 std::string NovelPath;
-int current_line_number; // This global 'current_line_number' will be the 1-indexed next line to read.
+int current_line_number;
+std::string ConfigFilePath;
 
 // Function declarations
-bool configExists(const std::string &configname);
 void initConfigAndNovel();
 void readNovel();
 void showSettings();
-void writeConfig();
-
-bool configExists(const std::string &configname)
-{
-    std::ifstream check_config(configname);
-    return check_config.good();
-}
+void writeAppSettings();
 
 void initConfigAndNovel()
 {
-    SetConsoleOutputCP(CP_UTF8); // Set console output to UTF-8
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+#else
+    // For Linux/macOS, UTF-8 is generally assumed or set by locale.
+    // Explicit setup might involve std::locale and std::ios_base::sync_with_stdio(false)
+    // but for basic console output, often not needed if system locale is UTF-8.
+#endif
 
-    char* localAppDataPath_cstr = nullptr;
-    size_t len;
-    errno_t err = _dupenv_s(&localAppDataPath_cstr, &len, "LOCALAPPDATA");
-
-    if (err != 0 || localAppDataPath_cstr == nullptr) {
-        std::cerr << "Error: LOCALAPPDATA environment variable not found." << std::endl;
-        // Consider exiting or using a default path if critical
-        if (localAppDataPath_cstr) free(localAppDataPath_cstr);
-        return;
-    }
-    std::string AppDataPath(localAppDataPath_cstr);
-    free(localAppDataPath_cstr);
-
-    std::string NovelreaderDirPath = AppDataPath + "\\Novelreader"; // Corrected variable name
-    std::string NovelreaderConfigPath = NovelreaderDirPath + "\\config";
-
-    if (!(CreateDirectory(NovelreaderDirPath.c_str(), NULL) || GetLastError() == ERROR_ALREADY_EXISTS))
-    {
-        std::cerr << "Directory create unsuccessfully, The information: " << GetLastError() << std::endl;
-        return;
+    std::string config_dir = FileSystemUtils::get_config_directory_path();
+    if (config_dir.empty()) {
+        std::cerr << "Critical: Could not determine config directory. Exiting." << std::endl;
+        PlatformUtils::platform_sleep(3000);
+        exit(1);
     }
 
-    config_stream.open(NovelreaderConfigPath, std::ios::in | std::ios::out);
-    if (!config_stream.is_open()) {
-        // File doesn't exist or cannot be opened for in|out, try creating it.
-        config_stream.clear(); // Clear error flags
-        config_stream.open(NovelreaderConfigPath, std::ios::out); // Create it
-        if (config_stream.is_open()) {
-            config_stream << "" << std::endl; // Default empty path
-            config_stream << 0 << std::endl;  // Default start line (0-indexed, so line 1)
-            config_stream.close();
-            // Reopen in in|out mode
-            config_stream.open(NovelreaderConfigPath, std::ios::in | std::ios::out);
-        }
+    if (!FileSystemUtils::create_directory_if_not_exists(config_dir)) {
+        std::cerr << "Critical: Could not create config directory: " << config_dir << ". Exiting." << std::endl;
+        PlatformUtils::platform_sleep(3000);
+        exit(1);
     }
 
-    if (!config_stream.is_open()) {
-        std::cerr << "Could not open or create config file: " << NovelreaderConfigPath << std::endl;
-        return;
-    }
+    ConfigFilePath = config_dir + PlatformUtils::get_path_separator() + "config";
 
-    config_stream.seekg(0);
-
-    std::getline(config_stream, NovelPath);
-    int val_from_config = 0;
-    if (!(config_stream >> val_from_config)) {
-        if (config_stream.eof()) { // Reached EOF, means line number might be missing
-             config_stream.clear(); // Clear EOF flag
-             config_stream.seekg(0, std::ios::end); // Go to end
-             if (config_stream.tellg() == 0) { // File is empty
-                std::cerr << "Warning: Config file is empty. Initializing with defaults." << std::endl;
-             } else {
-                std::cerr << "Warning: Could not read line number from config. It might be incomplete. Defaulting to start from line 1." << std::endl;
-             }
-        } else if (config_stream.fail()) { // Other fail state
-            std::cerr << "Warning: Failed to read line number from config due to format error. Defaulting to start from line 1." << std::endl;
-            config_stream.clear(); // Clear fail flags
-            // Attempt to consume the rest of the problematic line if any before trying to write defaults
-            std::string dummy;
-            std::getline(config_stream, dummy);
-        }
-        val_from_config = 0;
-        // Ensure config is in a good state to write defaults if it was problematic
-        config_stream.close();
-        config_stream.open(NovelreaderConfigPath, std::ios::out | std::ios::trunc);
-        if (config_stream.is_open()) {
-            config_stream << (NovelPath.empty() ? "" : NovelPath) << std::endl;
-            config_stream << val_from_config << std::endl;
-            config_stream.close();
-            config_stream.open(NovelreaderConfigPath, std::ios::in | std::ios::out); // Reopen for continued use
-             if (!config_stream.is_open()) { /* handle error */ }
-             else {
-                 config_stream.seekg(0); // Reset position after re-opening
-                 std::getline(config_stream, NovelPath); // Re-read path
-                 config_stream >> val_from_config; // Re-read line value
-             }
-        }
+    int line_val_from_config = 0;
+    if (!FileSystemUtils::read_config(ConfigFilePath, NovelPath, line_val_from_config)) {
+        std::cerr << "Warning: Configuration could not be read or initialized properly." << std::endl;
+        NovelPath = "";
+        line_val_from_config = 0;
     }
-    ::current_line_number = val_from_config + 1;
+    ::current_line_number = line_val_from_config + 1;
 
     if (!NovelPath.empty()) {
+        if (novel_stream.is_open()) novel_stream.close();
         novel_stream.open(NovelPath, std::ios::in);
         if (!novel_stream.is_open()) {
             std::cerr << "Error: Could not open novel file: " << NovelPath << ". Please check path in settings." << std::endl;
         }
-    } else {
-        // No message here, main menu will show "Not Set"
     }
 }
 
 void readNovel()
 {
     if (!novel_stream.is_open()) {
-        system("cls");
+        PlatformUtils::clear_screen();
         std::cout << "Novel file is not open. Current path: "<< (NovelPath.empty() ? "Not set" : NovelPath) << std::endl;
         std::cout << "Please check the path in Settings." << std::endl;
-        Sleep(2500);
+        PlatformUtils::platform_sleep(2500);
         return;
     }
     novel_stream.clear();
@@ -141,11 +88,11 @@ void readNovel()
 
     for (int i = 1; i < ::current_line_number; i++) {
         if (!std::getline(novel_stream, content_buffer)) {
-            system("cls");
+            PlatformUtils::clear_screen();
             std::cerr << "Novel does not have line " << ::current_line_number << " (EOF reached while skipping)." << std::endl;
             std::cout << "You might want to reset the line number in Settings or check the novel file." << std::endl;
-            ::current_line_number = i; // Reset to the last valid line number reached
-            Sleep(3000);
+            ::current_line_number = i;
+            PlatformUtils::platform_sleep(3000);
             return;
         }
     }
@@ -153,36 +100,31 @@ void readNovel()
     int line_being_displayed = ::current_line_number;
 
     while (true) {
-        system("cls");
+        PlatformUtils::clear_screen();
         if (!std::getline(novel_stream, content_buffer)) {
             std::cout << "End of novel." << std::endl;
-            // At this point, line_being_displayed was the one we ATTEMPTED to read.
-            // So, next time, we should try to read line_being_displayed again.
             ::current_line_number = line_being_displayed;
-            Sleep(1500);
+            PlatformUtils::platform_sleep(1500);
             break;
         }
-        std::cout << "Line " << line_being_displayed << ":\n"; // Display current line number
+        std::cout << "Line " << line_being_displayed << ":\n";
         std::cout << content_buffer << std::endl;
 
         std::cout << "\n--- (Enter: next, Q: quit to menu) ---";
         char ch = getchar();
         if (ch == 'q' || ch == 'Q') {
-            // User quit AFTER successfully reading and displaying 'line_being_displayed'.
-            // So, next time, we should start at 'line_being_displayed + 1'.
             ::current_line_number = line_being_displayed + 1;
             break;
         }
-        // Any other key (including Enter which getchar() captures if buffer is empty)
         line_being_displayed++;
     }
-    writeConfig();
-    system("cls");
+    writeAppSettings();
+    PlatformUtils::clear_screen();
 }
 
 void showSettings()
 {
-    system("cls");
+    PlatformUtils::clear_screen();
     std::string inputNovelPath;
     std::string inputLineStr;
 
@@ -190,7 +132,6 @@ void showSettings()
     std::cout << "Current Novel Path: " << (NovelPath.empty() ? "Not set" : NovelPath) << std::endl;
     std::cout << "Enter new novel path (or press Enter to keep current): ";
 
-    // Important: Consume the newline character left by previous std::cin >> choice
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, inputNovelPath);
 
@@ -201,20 +142,20 @@ void showSettings()
         {
             std::cerr << "\nError: The new path is not correct or file cannot be opened." << std::endl;
             std::cout << "Novel path not changed." << std::endl;
-            Sleep(2000);
+            PlatformUtils::platform_sleep(2000);
         } else {
-            if (novel_stream.is_open()) novel_stream.close(); // Close old novel
+            test_novel.close();
+            if (novel_stream.is_open()) novel_stream.close();
             NovelPath = inputNovelPath;
-            novel_stream.open(NovelPath, std::ios::in); // Open new novel
+            novel_stream.open(NovelPath, std::ios::in);
             if(!novel_stream.is_open()){
                 std::cerr << "\nError: Could not open new novel file: " << NovelPath << std::endl;
-                NovelPath = ""; // Reset path if open failed
+                NovelPath = "";
             } else {
                 std::cout << "\nNovel path updated. Reading will start from the beginning of the new novel." << std::endl;
             }
-            ::current_line_number = 1; // Reset line number for the new novel
-            Sleep(1500);
-            test_novel.close();
+            ::current_line_number = 1;
+            PlatformUtils::platform_sleep(1500);
         }
     }
 
@@ -236,58 +177,35 @@ void showSettings()
         } catch (const std::out_of_range& oor) {
             std::cerr << "\nInput for line number is out of range. Line number not changed." << std::endl;
         }
-        Sleep(1500);
+        PlatformUtils::platform_sleep(1500);
     }
 
-    writeConfig();
-    system("cls");
+    writeAppSettings();
+    PlatformUtils::clear_screen();
     std::cout << "Settings saved." << std::endl;
-    Sleep(1500);
+    PlatformUtils::platform_sleep(1500);
 }
 
-void writeConfig()
+void writeAppSettings()
 {
-    if (config_stream.is_open()) {
-        config_stream.close(); // Close before reopening with truncate
+    if (ConfigFilePath.empty()) {
+         std::cerr << "Critical Error: Config file path not set. Cannot save settings." << std::endl;
+         PlatformUtils::platform_sleep(2000);
+         return;
     }
-
-    char* localAppDataPath_cstr = nullptr;
-    size_t len;
-    errno_t err = _dupenv_s(&localAppDataPath_cstr, &len, "LOCALAPPDATA");
-     if (err != 0 || localAppDataPath_cstr == nullptr) { /* error handling */ return; }
-    std::string AppDataPath(localAppDataPath_cstr);
-    free(localAppDataPath_cstr);
-    std::string NovelreaderConfigPath = AppDataPath + "\\Novelreader\\config";
-
-    config_stream.open(NovelreaderConfigPath, std::ios::out | std::ios::trunc);
-    if (!config_stream.is_open()) {
-        std::cerr << "Critical Error: Failed to open config file for writing in writeConfig(). Settings not saved." << std::endl;
-        Sleep(2000);
-        return;
-    }
-
-    config_stream << NovelPath << std::endl;
-    config_stream << (::current_line_number - 1) << std::endl;
-    config_stream.flush();
-    config_stream.close(); // Close after writing
-
-    // Reopen for future operations if needed by other parts of the program,
-    // though current flow usually exits or re-inits.
-    // For safety, ensure it's ready for next initConfigAndNovel() if program continues.
-    config_stream.open(NovelreaderConfigPath, std::ios::in | std::ios::out);
-     if (!config_stream.is_open()) {
-        std::cerr << "Warning: Failed to reopen config file after writing." << std::endl;
+    if (!FileSystemUtils::write_config(ConfigFilePath, NovelPath, ::current_line_number - 1)) {
+        std::cerr << "Warning: Failed to write settings to config file." << std::endl;
+        PlatformUtils::platform_sleep(2000);
     }
 }
-
 
 int main()
 {
     initConfigAndNovel();
     while (true)
     {
-        system("cls");
-        std::cout << "--- NovelReader Menu ---" << std::endl;
+        PlatformUtils::clear_screen();
+        std::cout << "--- NovelReader Menu (" << PlatformUtils::get_os_name() << ") ---" << std::endl; // Added OS name
         std::cout << "--------------------------" << std::endl;
         std::cout << "Novel: " << (NovelPath.empty() ? "Not Set" : NovelPath) << std::endl;
         std::cout << "Next line to read: " << ::current_line_number << std::endl;
@@ -303,9 +221,9 @@ int main()
         if(std::cin.fail()){
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            system("cls");
+            PlatformUtils::clear_screen();
             std::cout << "Invalid input. Please enter a number (1-3)." << std::endl;
-            Sleep(1500);
+            PlatformUtils::platform_sleep(1500);
             continue;
         }
 
@@ -313,36 +231,30 @@ int main()
         {
             case 1:
                 if (NovelPath.empty() || !novel_stream.is_open()) {
-                    system("cls");
+                    PlatformUtils::clear_screen();
                     std::cout << "Novel path not set or novel file cannot be opened." << std::endl;
                     std::cout << "Please specify a valid novel file in Settings first." << std::endl;
-                    Sleep(2500);
+                    PlatformUtils::platform_sleep(2500);
                     break;
                 }
-                // system("cls"); // readNovel will clear screen
-                // std::cout << "Starting to read novel..." << std::endl;
-                // Sleep(500);
                 readNovel();
                 break;
             case 2:
                 showSettings();
                 break;
             case 3:
-                system("cls");
+                PlatformUtils::clear_screen();
                 std::cout << "Exiting NovelReader..." << std::endl;
-                Sleep(700);
-                if(config_stream.is_open()) config_stream.close();
+                PlatformUtils::platform_sleep(700);
                 if(novel_stream.is_open()) novel_stream.close();
                 return 0;
             default:
-                system("cls");
+                PlatformUtils::clear_screen();
                 std::cout << "Invalid choice. Please enter a number between 1 and 3." << std::endl;
-                Sleep(1500);
+                PlatformUtils::platform_sleep(1500);
                 break;
         }
     }
-    // Should not be reached
-    if(config_stream.is_open()) config_stream.close();
-    if(novel_stream.is_open()) novel_stream.close();
+    if(novel_stream.is_open()) novel_stream.close(); // Should be unreachable
     return 0;
 }
