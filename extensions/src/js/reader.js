@@ -168,17 +168,66 @@ class NovelReader {
     async initialize() { /* ... (same as before, calls initializeReaderContent) ... */ }
 }
 // Full prototype methods and initialization for NovelReader (copy-pasted for tool, ensure they are complete)
-NovelReader.prototype.createContainer = function() { /*...*/ }; NovelReader.prototype.savePosition = async function() {/*...*/}; NovelReader.prototype.loadPosition = async function() {/*...*/}; NovelReader.prototype.updateContentStyle = function() {/*...*/}; NovelReader.prototype.updateStyle = function() {/*...*/}; NovelReader.prototype.initializeEventListeners = function() {/*...*/}; NovelReader.prototype.handleKeyDown = async function(e) {/*...*/}; NovelReader.prototype.toggleVisibility = async function() {/*...*/}; NovelReader.prototype.nextPage = async function() {if(this.currentLine<this.lines.length-1){this.currentLine++; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}}; NovelReader.prototype.previousPage = async function() {if(this.currentLine>0){this.currentLine--; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}};
+NovelReader.prototype.createContainer = function() {
+   console.log("[Reader createContainer] Called.");
+   const container = document.createElement('div');
+   container.id = 'novel-container';
+   Object.assign(container.style, { position: 'fixed', top: '10px', left: '10px', transform: 'none', zIndex: '1000', cursor: 'move', userSelect: 'none', opacity: this.settings.opacity, backgroundColor: this.settings.backgroundColor, padding: '10px 15px', borderRadius: '5px', display: 'inline-block', maxWidth: `${this.settings.maxWidth}%`, transition: 'all 0.3s ease' });
+
+   this.measureContainer = document.createElement('div');
+   console.log("[Reader createContainer] this.measureContainer created:", this.measureContainer);
+   Object.assign(this.measureContainer.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap', padding: '2px 4px' });
+
+   console.log("[Reader createContainer] document.body available for measureContainer?", !!document.body);
+   if(document.body) {
+       document.body.appendChild(this.measureContainer);
+   } else {
+       console.warn("[Reader createContainer] document.body not ready for measureContainer.");
+   }
+
+   this.content = document.createElement('div');
+   this.content.id = 'novel-content';
+   console.log("[Reader createContainer] this.content created:", this.content);
+   // updateContentStyle is called here, ensure this.content is set before it's called if it relies on it.
+   // Current updateContentStyle uses this.content directly, so it's fine.
+   this.updateContentStyle();
+
+   container.appendChild(this.content);
+
+   console.log("[Reader createContainer] document.body available for main container?", !!document.body);
+   if(document.body) {
+       document.body.appendChild(container);
+   } else {
+       console.warn("[Reader createContainer] document.body not ready for novel container.");
+   }
+
+   this.container = container;
+   console.log("[Reader createContainer] this.container assigned:", this.container);
+
+   // Event listeners
+   this.container.addEventListener('mousedown', (e) => { this.isDragging = true; const rect = this.container.getBoundingClientRect(); this.offsetX = e.clientX - rect.left; this.offsetY = e.clientY - rect.top; e.preventDefault(); this.container.style.opacity = this.settings.hoverOpacity; this.container.style.transition = 'none'; });
+   document.addEventListener('mousemove', (e) => { if (this.isDragging && this.container) { const newLeft = e.clientX - this.offsetX; const newTop = e.clientY - this.offsetY; const maxX = window.innerWidth - this.container.offsetWidth; const maxY = window.innerHeight - this.container.offsetHeight; this.container.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px'; this.container.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px'; } });
+   document.addEventListener('mouseup', () => { if (this.isDragging) { this.isDragging = false; if(this.container) {this.container.style.opacity = this.settings.opacity; this.container.style.transition = 'opacity 0.3s ease';} this.savePosition(); } });
+   container.addEventListener('mouseenter', () => { if (!this.isDragging && this.container) { container.style.opacity = this.settings.hoverOpacity; container.style.backgroundColor = this.settings.hoverBackgroundColor; if (this.settings.textShadow && this.content) { this.content.style.textShadow = '0 0 4px white'; } } });
+   container.addEventListener('mouseleave', () => { if (!this.isDragging && this.container) { container.style.opacity = this.settings.opacity; container.style.backgroundColor = this.settings.backgroundColor; if (this.settings.textShadow && this.content) { this.content.style.textShadow = '0 0 3px white'; } } });
+
+   console.log("[Reader createContainer] END. States: container=", !!this.container, "content=", !!this.content, "measureContainer=", !!this.measureContainer);
+   return container;
+}; NovelReader.prototype.savePosition = async function() {/*...*/}; NovelReader.prototype.loadPosition = async function() {/*...*/}; NovelReader.prototype.updateContentStyle = function() {/*...*/}; NovelReader.prototype.updateStyle = function() {/*...*/}; NovelReader.prototype.initializeEventListeners = function() {/*...*/}; NovelReader.prototype.handleKeyDown = async function(e) {/*...*/}; NovelReader.prototype.toggleVisibility = async function() {/*...*/}; NovelReader.prototype.nextPage = async function() {if(this.currentLine<this.lines.length-1){this.currentLine++; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}}; NovelReader.prototype.previousPage = async function() {if(this.currentLine>0){this.currentLine--; this.updateContent(); await StorageManager.set('currentLine', this.currentLine + 1); this.startAutoHideTimer();}};
 NovelReader.prototype.updateContent = function() { if(!this.content || !this.measureContainer) { console.warn("updateContent called before essential UI is ready."); return; } let textToDisplay = ""; if (this.lines && typeof this.currentLine === 'number' && this.currentLine >= 0 && this.lines.length > this.currentLine && this.lines[this.currentLine] !== undefined) { textToDisplay = this.lines[this.currentLine]; } else if (this.defaultMessages && this.defaultMessages.noContent !== undefined) { textToDisplay = this.defaultMessages.noContent; } this.content.textContent = (textToDisplay === null || textToDisplay === undefined) ? "" : String(textToDisplay).trim(); if (this.content.style && this.settings) { this.measureContainer.textContent = this.content.textContent; this.measureContainer.style.fontSize = this.content.style.fontSize || (this.settings.fontSize ? this.settings.fontSize + 'px' : '14px'); this.measureContainer.style.fontFamily = this.content.style.fontFamily || this.settings.fontFamily || 'Arial'; } try { if (this.container && this.measureContainer.offsetWidth !== undefined && this.measureContainer.offsetWidth > 0) { const textWidth = this.measureContainer.offsetWidth; const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 0; const maxWidth = Math.min(textWidth, screenWidth > 0 ? screenWidth * 0.5 : textWidth); this.container.style.width = maxWidth + 'px'; } else if (this.container) { this.container.style.width = 'auto'; } } catch(e) { console.warn("Error calculating text width:", e); if(this.container) { this.container.style.width = 'auto'; } } };
 NovelReader.prototype.startAutoHideTimer = function() { if (this.autoHideTimer) { clearTimeout(this.autoHideTimer); } this.autoHideTimer = setTimeout(() => { if(this.container) this.container.style.opacity = this.settings.opacity; }, 3000); };
 NovelReader.prototype.initialize = async function() {
+   // This is the body of NovelReader.prototype.initialize
+   console.log("[Reader initialize] START. Initial states: container=", !!this.container, "content=", !!this.content, "measureContainer=", !!this.measureContainer);
    this.updateMessages();
+
+   console.log("[Reader initialize] BEFORE createContainer. States: container=", !!this.container, "content=", !!this.content, "measureContainer=", !!this.measureContainer);
    this.createContainer();
+   console.log("[Reader initialize] AFTER createContainer. States: container=", !!this.container, "content=", !!this.content, "measureContainer=", !!this.measureContainer);
 
-   // Ensure DOM changes from createContainer are processed
    await Promise.resolve();
+   console.log("[Reader initialize] AFTER Promise.resolve. States: container=", !!this.container, "content=", !!this.content, "measureContainer=", !!this.measureContainer);
 
-   // Guard clause for critical UI elements
    if (!this.container || !this.content || !this.measureContainer) {
        console.error("Reader: Critical UI elements (container, content, or measureContainer) not properly created. Aborting further UI initialization for this instance.");
        return;
@@ -199,6 +248,7 @@ NovelReader.prototype.initialize = async function() {
    }
 
    await this.initializeReaderContent();
+   console.log("[Reader initialize] END.");
 };
 
 
