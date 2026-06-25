@@ -19,9 +19,11 @@ void platform_sleep(int milliseconds) {
 
 void clear_screen() {
 #ifdef _WIN32
-    system("cls");
+    int rc = system("cls");
+    (void)rc;
 #else
-    system("clear");
+    int rc = system("clear");
+    (void)rc;
 #endif
 }
 
