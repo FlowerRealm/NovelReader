@@ -1,4 +1,4 @@
-extensions.pem
 build/
+build-*/
 .cache/
 .vscode/
