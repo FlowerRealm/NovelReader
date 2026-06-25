@@ -3,7 +3,7 @@
  * @Date: 2025-4-4 11:47:51
  * @LastEditors: FlowerRealm admin@flowerrealm.top
  * @LastEditTime: 2025-06-27 20:03:41
- * @FilePath: \NovelReader\windows\src\main.cpp
+ * @FilePath: /NovelReader/native/src/main.cpp
  */
 #include <fstream>
 #include <iostream>

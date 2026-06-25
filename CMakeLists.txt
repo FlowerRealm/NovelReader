@@ -12,7 +12,7 @@ set(CMAKE_C_STANDARD 14)
 if(MSVC)
     # MSVC specific flags
     add_compile_options(/W4 /O2)
-    # Suppress warnings about "unsafe" functions like getenv (used with _dupenv_s)
+    # Suppress warnings about "unsafe" functions like getenv (used in POSIX code paths)
     # and other CRT functions if they were to be used.
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(CLOCK) # Define CLOCK for MSVC
@@ -63,6 +63,9 @@ if(NOT WIN32 AND NOVELREADER_WITH_UCHARDET)
         endif()
     endif()
 endif()
+
+target_include_directories(NovelReaderCLI PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 
 # Platform specific configurations
 if(WIN32)
